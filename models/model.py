@@ -1,6 +1,8 @@
 # system
 import os
 import time
+import sys
+import string
 from abc import ABC, abstractmethod
 
 # lib
@@ -9,6 +11,8 @@ import matplotlib.pyplot as plt
 
 # self
 from general.utils import generate_nonce
+from general.logger import Logger
+# from keras.utils.generic_utils import
 
 
 @dataclass
@@ -75,6 +79,8 @@ class NeuralCryptographyModel(ABC):
         if not os.path.exists(self.dir):
             os.makedirs(self.dir)
 
+        self.logger = Logger(os.path.join(self.dir, 'log.txt'))
+        sys.stdout = self.logger
         self.agents = self.initialize_model()
 
     def _get_save_path(self, agent_index):
