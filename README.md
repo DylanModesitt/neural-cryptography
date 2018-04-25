@@ -1,8 +1,11 @@
-# neural-cryptography
+# Neural Cryptography
 
 These are tools experimenting with neural cryptography. 
 This is being done as the final project to an MIT course, 6.857, 
-and is still in active development. Once completed, this 
+and is still in active development. 
+
+The models are written in Keras and are trained using the 
+tensorflow backend. Once completed, this 
 ReadMe will include a comprehensive summary of our
 findings and results. 
 
