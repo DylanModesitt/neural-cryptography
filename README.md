@@ -41,7 +41,7 @@ In an attempt to learn more standardized symmetric key encryption operations,
 such as the One-Time Pad, we have created a network architecture that is localized
 to be element-wise or "Bitwise" among the inputs.
 
-![Bitwise Function Network](/assets/element_wise_nn.png)
+<img src='/assets/element_wise_nn.png' alt='Bitwise Function Network' style='max-width:50%;'></img>
 
 # Setup
 
