@@ -71,5 +71,7 @@ The project is structured in the following fashion.
 |            utility functions, etc.
 +-- _models
 |   +-- code that builds, trains, and visualizes keras
++-- assets
+|   +-- other assets (like pictures)
 
 ```
