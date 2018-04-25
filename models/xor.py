@@ -89,7 +89,7 @@ class XOR(NeuralCryptographyModel):
         return [model]
 
     def __call__(self,
-                 epochs=50,
+                 epochs=10,
                  iterations_per_epoch=1000,
                  batch_size=512):
         """
@@ -124,6 +124,7 @@ class XOR(NeuralCryptographyModel):
             'xor model': join_list_valued_dictionaries(*xor_histories),
         })
 
+        self.save()
         self.history = history
 
         return history
@@ -131,6 +132,6 @@ class XOR(NeuralCryptographyModel):
 
 if __name__ == '__main__':
     model = XOR(verbose=1)
-    history = model(epochs=50)
+    history = model(epochs=10)
     model.visualize()
 

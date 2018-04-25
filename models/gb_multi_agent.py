@@ -128,7 +128,7 @@ class GAN(NeuralCryptographyModel):
     def __call__(self,
                  epochs=50,
                  bob_prefit_epochs=10,
-                 eve_postfit_epochs=100,
+                 eve_postfit_epochs=50,
                  eve_minibatch_multiplier=2,
                  iterations_per_epoch=100,
                  batch_size=512):
@@ -149,10 +149,9 @@ class GAN(NeuralCryptographyModel):
         bob_histories = []
         eve_histories = []
 
-        def prefit_bob():
+        for i in range(0, bob_prefit_epochs):
 
-            msgs, keys = gen_symmetric_encryption_data(bob_prefit_epochs *
-                                                       iterations_per_epoch *
+            msgs, keys = gen_symmetric_encryption_data(iterations_per_epoch *
                                                        batch_size)
 
             self.print('pre-fitting bob')
@@ -168,9 +167,6 @@ class GAN(NeuralCryptographyModel):
             eve_histories.append(nanify_dict_of_lists(bob_history))
 
             self.save()
-
-        if bob_prefit_epochs > 0:
-            prefit_bob()
 
         for i in range(0, epochs):
 
@@ -204,10 +200,9 @@ class GAN(NeuralCryptographyModel):
 
             self.save()
 
-        def postfit_eve():
+        for i in range(0, eve_postfit_epochs):
 
-            msgs, keys = gen_symmetric_encryption_data(eve_postfit_epochs *
-                                                       iterations_per_epoch *
+            msgs, keys = gen_symmetric_encryption_data(iterations_per_epoch *
                                                        eve_minibatch_multiplier *
                                                        batch_size)
             print('fitting eve')
@@ -225,9 +220,6 @@ class GAN(NeuralCryptographyModel):
 
             self.save()
 
-        if eve_postfit_epochs > 0:
-            postfit_eve()
-
         history = self.generate_cohesive_history({
             'alice / bob': join_list_valued_dictionaries(*bob_histories),
             'eve': join_list_valued_dictionaries(*eve_histories)
@@ -241,6 +233,6 @@ class GAN(NeuralCryptographyModel):
 if __name__ == '__main__':
 
     model = GAN(verbose=1)
-    history = model(epochs=2, bob_prefit_epochs=1, eve_postfit_epochs=1)
+    history = model()
     model.visualize()
 

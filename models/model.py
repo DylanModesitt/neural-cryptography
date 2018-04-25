@@ -120,7 +120,7 @@ class NeuralCryptographyModel(ABC):
         if self.verbose:
             print(*args)
 
-    def visualize(self, metrics_to_mix=()):
+    def visualize(self, metrics_to_mix=(), sub_directory=None):
         """
         visualize the history of a model's performance among the
         various metrics it was compiled with with all of its agents.
@@ -136,13 +136,18 @@ class NeuralCryptographyModel(ABC):
 
                                will have validation accuracy and accuracy on the same plot
                                that will have acc used as the naming convention.
+
+        :param sub_directory: a sub-directory to put the visualization in. This is useful
+                              when you are experimenting by training the same network many times.
+
         :return: None.
         """
 
         if not hasattr(self, 'history'):
             raise ValueError('the model must be fit first')
 
-        visualization_dir = os.path.join(self.dir, 'visualization/')
+        sub_directory = sub_directory if sub_directory is not None else ''
+        visualization_dir = os.path.join(os.path.join(self.dir, sub_directory), 'visualization/')
         if not os.path.exists(visualization_dir):
             os.makedirs(visualization_dir)
 
