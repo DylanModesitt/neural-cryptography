@@ -33,7 +33,7 @@ from keras.losses import mean_absolute_error
 import matplotlib.pyplot as plt
 
 # self
-from general.layers import Intertwine
+from general.layers import ElementWise
 from models.model import NeuralCryptographyModel
 from data.data import gen_xor_data
 from general.utils import join_list_valued_dictionaries, nanify_dict_of_lists
@@ -53,23 +53,29 @@ class XOR(NeuralCryptographyModel):
         input_1 = Input(shape=(self.input_length,), name='input_1')
         input_2 = Input(shape=(self.input_length,), name='input_2')
 
-        reshape = Reshape((-1, 1))
+        # reshape = Reshape((-1, 1))
+
+        # bitwise_function = Flatten()(
+        #     TimeDistributed(
+        #         Dense(1, activation='tanh')
+        #     )(LocallyConnected1D(
+        #             self.latent_dim,
+        #             kernel_size=2,
+        #             strides=2,
+        #             activation='relu'
+        #         )(reshape(
+        #             Intertwine()([
+        #                 input_1,
+        #                 input_2
+        #             ]))
+        #         )
+        #     )
+        # )
 
         bitwise_function = Flatten()(
-            TimeDistributed(
-                Dense(1, activation='tanh')
-            )(LocallyConnected1D(
-                    self.latent_dim,
-                    kernel_size=2,
-                    strides=2,
-                    activation='relu'
-                )(reshape(
-                    Intertwine()([
-                        input_1,
-                        input_2
-                    ]))
-                )
-            )
+            ElementWise([self.latent_dim, 1],
+                        activation=['relu', 'tanh'],
+                        share_element_weights=True)([input_1, input_2])
         )
 
         model = Model(inputs=[input_1, input_2], outputs=bitwise_function)
