@@ -36,7 +36,7 @@ from data.data import gen_symmetric_encryption_data
 from general.utils import join_list_valued_dictionaries, nanify_dict_of_lists
 
 @dataclass
-class GAN(NeuralCryptographyModel):
+class MultiAgentDecryption(NeuralCryptographyModel):
 
     """
     initialize the model by passing in model
@@ -46,14 +46,15 @@ class GAN(NeuralCryptographyModel):
     If the parameter does not have a default value,
     provide one to the initializer.
 
-    This is a Generative Adversarial Network (GAN) for 
+    This is a (somewhat) Generative Adversarial Network (GAN) for
     training three neural networks: Alice, Bob, and Eve.
+
+    The model architecture is based of a paper published by
+    Google Brain: https://arxiv.org/pdf/1610.06918v1.pdf
 
     Alice's goal is to encrypt (with a key).
     Bob's goal is to decrypt (with a key).
     Eve's goal is to break the security of the interaction.
-    currently, Eve's only training to do this revolves
-    around Chosen Plaintext Attachs (CPA).
     """
 
     message_length: int = 16
@@ -232,7 +233,7 @@ class GAN(NeuralCryptographyModel):
 
 if __name__ == '__main__':
 
-    model = GAN(verbose=1)
+    model = MultiAgentDecryption(verbose=1)
     history = model()
     model.visualize()
 
