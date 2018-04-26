@@ -31,7 +31,7 @@ class DiscriminatorGame(Enum):
     CiphertextIndistinguishability = 1
 
 
-class GAN(NeuralCryptographyModel, ABC):
+class GAN(ABC, NeuralCryptographyModel):
     """
     A ABC (Abstract Base Class) Generative Adversarial Network
     setup to perform symmetric key encryption where a
