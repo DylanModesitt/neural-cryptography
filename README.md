@@ -14,7 +14,7 @@ tensorflow backend. Once completed, this
 ReadMe will include a comprehensive summary of our
 findings and results. 
 
-# Architectural Descriptions
+# Cryptographic and Architectural Descriptions
 
 ## Symmetric Key Encryption
 
@@ -42,6 +42,12 @@ such as the One-Time Pad, we have created a network architecture that is localiz
 to be element-wise or "Bitwise" among the inputs.
 
 <img src='/assets/element_wise_nn.png' alt='Bitwise Function Network' style='max-width:50%;'></img>
+
+## Purely Adversarial Neural Cryptography
+
+In purely adversarial neural cryptography, we explore the capacity for Neural Networks
+to be capable in detecting broken encryption. We format this goal as one of several
+games, in the hope to allign with general cryptographic techniques and approaches.  
 
 # Setup
 
