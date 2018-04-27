@@ -146,8 +146,6 @@ class ElementWise:
                 raise ValueError('a list of activation functions must be '
                                  'the same length as the list of input units')
 
-        print(activation)
-
         self.activation = [activations.get(e) for e in activation]
         self.share_element_weights = share_element_weights
         self.use_bias = use_bias

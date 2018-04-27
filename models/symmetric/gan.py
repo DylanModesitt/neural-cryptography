@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 
 # lib
 from keras.layers import Input
+from dataclasses import dataclass
 
 # self
 from models.model import NeuralCryptographyModel
@@ -31,6 +32,7 @@ class DiscriminatorGame(Enum):
     CiphertextIndistinguishability = 1
 
 
+@dataclass
 class GAN(ABC, NeuralCryptographyModel):
     """
     A ABC (Abstract Base Class) Generative Adversarial Network

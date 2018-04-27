@@ -29,3 +29,21 @@ def gen_xor_data(n, length):
     return (a*2-1,
             b*2-1,
             xor*2-1)
+
+
+def gen_broken_otp_data(n, length, key):
+    """
+    generate n samples of a broken one time pad
+    encryption
+
+    :param n: the number of samples
+    :param length: the length of each bit string
+    :param key: The key. len(key) == length
+    :return: messages, encryptions
+    """
+
+    a = np.random.randint(0, 2, size=(n, length))
+    xor = a ^ key
+
+    return (a*2-1,
+            xor*2-1)
