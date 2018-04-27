@@ -1,6 +1,9 @@
 # system
 import random
 
+# lib
+import numpy as np
+
 
 def generate_nonce(length=8):
     """
@@ -49,3 +52,20 @@ def nanify_dict_of_lists(dict_):
     :return: the described dictionary
     """
     return {k: [float('nan')]*len(v) for k, v in dict_.items()}
+
+
+def replace_encryptions_with_random_entries(P, C, fraction=1/2, real_label=1):
+
+    split = len(P) // (int(1/fraction))
+    Y = np.ones(len(P)) if real_label == 1 else np.zeros(len(P))
+    C[:split] = np.random.randint(0, 2, size=(split, P.shape[1]))
+    Y[:split] = 0 if real_label == 1 else 1
+
+    # re-shuffle
+    p = np.random.permutation(len(P))
+    P = P[p]
+    C = C[p]
+    Y = Y[p]
+
+    return P, C, Y
+

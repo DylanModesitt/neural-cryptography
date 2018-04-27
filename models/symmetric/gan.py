@@ -8,6 +8,8 @@ from dataclasses import dataclass
 
 # self
 from models.model import NeuralCryptographyModel
+from data.data import gen_symmetric_encryption_data
+from general.utils import replace_encryptions_with_random_entries
 
 
 class DiscriminatorGame(Enum):
@@ -33,7 +35,7 @@ class DiscriminatorGame(Enum):
 
 
 @dataclass
-class GAN(ABC, NeuralCryptographyModel):
+class GAN(NeuralCryptographyModel, ABC):
     """
     A ABC (Abstract Base Class) Generative Adversarial Network
     setup to perform symmetric key encryption where a
@@ -71,8 +73,6 @@ class GAN(ABC, NeuralCryptographyModel):
         message_input = Input(shape=(self.message_length,), name='message_input')
         key_input = Input(shape=(self.key_length,), name='key_input')
 
-        generator = self.initialize_generator(message_input, key_input)
-
         if self.discrimination_mode == DiscriminatorGame.DetectEncryption:
             discriminator_message_input = Input(shape=(self.message_length,), name='discriminator_message_input')
             possible_ciphertext = Input(shape=(self.key_length,), name='possible_ciphertext_input')
@@ -90,34 +90,48 @@ class GAN(ABC, NeuralCryptographyModel):
                                                           possible_ciphertext_1,
                                                           possible_ciphertext_2)
 
-        generator = self.compile_generator(generator, discriminator)
-        discriminator = self.compile_discriminator(discriminator, generator)
+        # the discriminator should now be compiled. Thus, we can freeze
+        # it and give it to the generator initialization.
 
-        return [generator, discriminator]
+        frozen_discriminator = discriminator
+        for layer in frozen_discriminator:
+            layer.trainable = False
+
+        self.generator = self.initialize_discriminator(frozen_discriminator, message_input, key_input)
+
+        return [self.generator, self.discriminator]
 
 
     @abstractmethod
-    def initialize_generator(self, *inputs):
+    def initialize_generator(self, discriminator, *inputs):
         """
-        initialize your generator given the inputs. inputs
-        are formatted as a list of keras input layers. The number
+        initialize your generator given the inputs (and discriminator).
+        inputs are formatted as a list of keras input layers. The number
         of layers and their meaning will be different based on the
-        discrimination_mode
+        discrimination_mode.
+
+        The discriminator is given to accommodate the common case
+        where the generator's loss is at least somewhat determined
+        by the output of the generator on the currently acting
+        discriminator
 
         ******** DiscriminatorGame.DetectEncryption
 
         the discriminator will be given purely
             message_input, key_input
         and be asked to have, as an output.
-            ciphertext, decrypted_text
-        which return self-explanitory values
+            decrypted_text
+        which is self explanitory. The return type also
+        exectes another keras model that performs the
+        encryption (for the discriminator's purpose)
 
         ******** DiscriminatorGame.CiphertextIndistinguishability
 
         same as above
 
         :param inputs: the inputs as described above
-        :return: the uncompiled generator
+        :return: a list of the compiled generator and the
+                 encryptor (frozen)
         """
         raise NotImplementedError()
 
@@ -127,7 +141,8 @@ class GAN(ABC, NeuralCryptographyModel):
         initialize the discriminator given the inputs. inputs
         are formatted as a list of keras input layers. The number
         of layers and their meaning will be different based on the
-        discrimination_mode
+        discrimination_mode. The discriminator must be returned
+        *compiled*.
 
          ******** DiscriminatorGame.DetectEncryption
 
@@ -136,8 +151,8 @@ class GAN(ABC, NeuralCryptographyModel):
         and be asked to have, as an output.
             is_encryption
         which returns a 0 if the discriminator believes that that
-        the given ciophertext is an actual encryption of the given
-        plaintext
+        the given ciophertext is not an actual encryption of the given
+        plaintext and 1 otherwise (if it is)
 
         ******** DiscriminatorGame.CiphertextIndistinguishability
 
@@ -160,37 +175,11 @@ class GAN(ABC, NeuralCryptographyModel):
 
         there are no other options for the game.
 
+        :param generator: the generator
         :param inputs: the inputs as described above
         :return: the uncompiled discriminator
         """
         raise NotImplementedError()
-
-    @abstractmethod
-    def compile_discriminator(self, discriminator, generator):
-        """
-        Compile the discriminator. You may use the output of the
-        *uncompiled* generator as an element of your loss. Be sure to
-        freeze the generator if this is your intention
-
-        :param discriminator: the discriminator
-        :param generator: the generator
-        :return: the compiled discriminator
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def compile_generator(self, discriminator, generator):
-        """
-        compile the generator. You may use the ouput of the
-        *uncompiled* discriminator as an element of your loss.
-        Be sure to freeze the generator if this is your intention.
-
-        :param discriminator: the discriminator
-        :param generator: the generator
-        :return: the compiled generator
-        """
-        raise NotImplementedError()
-
 
     @staticmethod
     def get_supported_discrimination_modes():
@@ -216,6 +205,51 @@ class GAN(ABC, NeuralCryptographyModel):
 
         super(GAN, self).__post_init__()
 
+    def fit_discriminator(self,
+                          iterations,
+                          batch_size):
+
+        if self.discrimination_mode == DiscriminatorGame.DetectEncryption:
+
+            msgs, keys = gen_symmetric_encryption_data(iterations *
+                                                       batch_size,
+                                                       self.message_length)
+
+            return self.discriminator.fit(
+                x=[msgs, keys],
+                y=[msgs, msgs],
+                epochs=1,
+                batch_size=batch_size,
+                verbose=self.verbose
+            ).history
+
+        else:
+            raise NotImplementedError('this GAN mode is not yet supported')
+
+    def fit_generator(self,
+                      iterations,
+                      batch_size):
+
+        if self.discrimination_mode == DiscriminatorGame.DetectEncryption:
+
+            msgs, keys = gen_symmetric_encryption_data(iterations *
+                                                       batch_size,
+                                                       self.message_length)
+
+            results = self.encryptor.predict([msgs, keys])
+            P, C, Y = replace_encryptions_with_random_entries(msgs, results)
+
+            return self.discriminator.fit(
+                x=[P, C],
+                y=Y,
+                epochs=1,
+                batch_size=batch_size,
+                verbose=self.verbose
+            ).history
+
+        else:
+            raise NotImplementedError('this GAN mode is not yet supported')
+
     def __call__(self,
                  epochs=50,
                  generator_prefit_epochs=10,
@@ -237,6 +271,9 @@ class GAN(ABC, NeuralCryptographyModel):
                  when an agent is not fit while another is, their history is populated with
                  float('nan') values.
         """
-        raise NotImplementedError()
+
+        # TODO 
+        pass
+
 
 

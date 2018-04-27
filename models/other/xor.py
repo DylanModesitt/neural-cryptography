@@ -54,7 +54,8 @@ class XOR(NeuralCryptographyModel):
         input_2 = Input(shape=(self.input_length,), name='input_2')
 
         # reshape = Reshape((-1, 1))
-
+        # ORIGINAL BITWISE FUNCTION IMPLEMENTATION
+        #
         # bitwise_function = Flatten()(
         #     TimeDistributed(
         #         Dense(1, activation='tanh')

@@ -1,16 +1,10 @@
 # system
-import sys 
-import os 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 # lib
-import numpy as np
-import keras.backend as K
 from keras.models import Model
 from keras.layers import (
     Input,
-    Embedding,
-    LSTM,
     Dense,
     Reshape,
     Conv1D,
@@ -18,17 +12,11 @@ from keras.layers import (
     Flatten
 )
 from keras.activations import (
-    sigmoid,
     relu,
     tanh,
 )
 from keras.optimizers import Adam
 from keras.losses import mean_absolute_error
-from keras.metrics import binary_accuracy
-from keras.losses import mean_absolute_error
-
-import matplotlib.pyplot as plt
-
 
 # self
 from models.model import NeuralCryptographyModel

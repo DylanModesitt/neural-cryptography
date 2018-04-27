@@ -12,7 +12,7 @@ from keras.layers import (
 from models.adversarial.eve import Eve, AdversarialGame
 from general.layers import ElementWise
 from data.data import gen_broken_otp_data
-from general.utils import join_list_valued_dictionaries
+from general.utils import join_list_valued_dictionaries, replace_encryptions_with_random_entries
 
 
 @dataclass
@@ -80,16 +80,7 @@ class OTPSameKey(Eve):
                                        key)
 
             # replace to play game
-            split = len(P)//2
-            Y = np.ones(len(P))
-            C[:split] = np.random.randint(0, 2, size=(split, self.message_length))
-            Y[:split] = 0
-
-            # re-shuffle
-            p = np.random.permutation(len(P))
-            P = P[p]
-            C = C[p]
-            Y = Y[p]
+            P, C, Y = replace_encryptions_with_random_entries(P, C)
 
             history = self.model.fit(
                 x=[P, C],
@@ -100,6 +91,7 @@ class OTPSameKey(Eve):
             ).history
 
             histories.append(history)
+            self.save()
 
         history = self.generate_cohesive_history({
             'eve': join_list_valued_dictionaries(*histories)
