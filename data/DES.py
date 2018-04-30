@@ -1,4 +1,5 @@
 #-*- coding: utf8 -*-
+import numpy as np
 
 #Initial permut matrix for the datas
 PI = [58, 50, 42, 34, 26, 18, 10, 2,
@@ -129,22 +130,31 @@ def binvalue(val, bitsize): #Return the binary value as a string of the given si
     return binval
 
 def nsplit(s, n):#Split a list into sublists of size "n"
-    return [s[k:k+n] for k in xrange(0, len(s), n)]
+    # print(s)
+    # big = np.array(s)
+    # print(np.split(big,n))
+    # return np.split(big,n)
+    #return [s[k:k+n] for k in xrange(0, len(s), n)]
+    raise NotImplementedError
 
 ENCRYPT=1
 DECRYPT=0
 
 class des():
+    '''
+    Input plaintext is 64 bits (block size = 64 bits)
+    Key size is 56 bits + 8 parity bits
+    '''
     def __init__(self):
         self.password = None
         self.text = None
         self.keys = list()
         
     def run(self, key, text, action=ENCRYPT, padding=False,rounds=16):
-        if len(key) < 8:
-            raise "Key Should be 8 bytes long"
-        elif len(key) > 8:
-            key = key[:8] #If key size is above 8bytes, cut to be 8bytes long
+        # if len(key) < 8:
+        #     raise "Key Should be 8 bytes long"
+        # elif len(key) > 8:
+        #     key = key[:8] #If key size is above 8bytes, cut to be 8bytes long
         
         self.password = key
         self.text = text
@@ -155,33 +165,36 @@ class des():
             raise "Data size should be multiple of 8"
         
         self.generatekeys() #Generate all the keys
-        text_blocks = nsplit(self.text, 8) #Split the text in blocks of 8 bytes so 64 bits
-        result = list()
-        for block in text_blocks:#Loop over all the blocks of data
-            block = string_to_bit_array(block)#Convert the block in bit array
-            block = self.permut(block,PI)#Apply the initial permutation
-            g, d = nsplit(block, 32) #g(LEFT), d(RIGHT)
-            tmp = None
-            for i in range(rounds): #Do the specified number of rounds
-                d_e = self.expand(d, E) #Expand d to match Ki size (48bits)
-                if action == ENCRYPT:
-                    tmp = self.xor(self.keys[i], d_e)#If encrypt use Ki
-                else:
-                    tmp = self.xor(self.keys[15-i], d_e)#If decrypt start by the last key
-                tmp = self.substitute(tmp) #Method that will apply the SBOXes
-                tmp = self.permut(tmp, P)
-                tmp = self.xor(g, tmp)
-                g = d
-                d = tmp
-            result += self.permut(d+g, PI_1) #Do the last permut and append the result to result
-        final_res = bit_array_to_string(result)
+        # text_blocks = np.split(self.text, 8) #Split the text in blocks of 8 bytes so 64 bits
+        block = self.text
+        result = []
+        #we are assuming just 1 block of text for now
+        # for block in text_blocks:#Loop over all the blocks of data
+            # block = string_to_bit_array(block)#Convert the block in bit array
+        block = self.permut(block,PI)#Apply the initial permutation
+        print(block)
+        g, d = np.split(np.array(block), 2) #g(LEFT), d(RIGHT)
+        tmp = None
+        for i in range(rounds): #Do the specified number of rounds
+            d_e = self.expand(d, E) #Expand d to match Ki size (48bits)
+            if action == ENCRYPT:
+                tmp = self.xor(self.keys[i], d_e)#If encrypt use Ki
+            else:
+                tmp = self.xor(self.keys[15-i], d_e)#If decrypt start by the last key
+            tmp = self.substitute(tmp) #Method that will apply the SBOXes
+            tmp = self.permut(tmp, P)
+            tmp = self.xor(g, tmp)
+            g = d
+            d = tmp
+        result += self.permut(d+g, PI_1) #Do the last permut and append the result to result
+        final_res = result
         if padding and action==DECRYPT:
             return self.removePadding(final_res) #Remove the padding if decrypt and padding is true
         else:
             return final_res #Return the final string of data ciphered/deciphered
     
     def substitute(self, d_e):#Substitute bytes using SBOX
-        subblocks = nsplit(d_e, 6)#Split bit array into sublist of 6 bits
+        subblocks = np.split(np.array(d_e), 8)#Split bit array into sublist of 6 bits
         result = list()
         for i in range(len(subblocks)): #For all the sublists
             block = subblocks[i]
@@ -203,16 +216,16 @@ class des():
     
     def generatekeys(self):#Algorithm that generates all the keys
         self.keys = []
-        key = string_to_bit_array(self.password)
+        key = self.password
         key = self.permut(key, CP_1) #Apply the initial permut on the key
-        g, d = nsplit(key, 28) #Split it in to (g->LEFT),(d->RIGHT)
+        g, d = np.split(np.array(key), 2) #Split it in to (g->LEFT),(d->RIGHT)
         for i in range(16):#Apply the 16 rounds
             g, d = self.shift(g, d, SHIFT[i]) #Apply the shift associated with the round (not always 1)
-            tmp = g + d #Merge them
+            tmp = np.concatenate((g,d))
             self.keys.append(self.permut(tmp, CP_2)) #Apply the permut to get the Ki
 
     def shift(self, g, d, n): #Shift a list of the given value
-        return g[n:] + g[:n], d[n:] + d[:n]
+        return np.roll(g,-1), np.roll(d,-1)
     
     def addPadding(self):#Add padding to the datas using PKCS5 spec.
         pad_len = 8 - (len(self.text) % 8)
@@ -229,10 +242,10 @@ class des():
         return self.run(key, text, DECRYPT, padding)
     
 if __name__ == '__main__':
-    key = "secret_k"
-    text= "Hello wo"
+    key = np.random.randint(2,size=64)
+    text= np.random.randint(2,size=64)
     d = des()
     r = d.encrypt(key,text)
     r2 = d.decrypt(key,r)
-    print "Ciphered: %r" % r
-    print "Deciphered: ", r2
+    print("Ciphered: %r" % r)
+    print("Deciphered: ", r2)
