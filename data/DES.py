@@ -150,7 +150,7 @@ class des():
         self.text = None
         self.keys = list()
         
-    def run(self, key, text, action=ENCRYPT, padding=False,rounds=16):
+    def run(self, key, text, action=ENCRYPT, padding=False,rounds=4):
         # if len(key) < 8:
         #     raise "Key Should be 8 bytes long"
         # elif len(key) > 8:
@@ -180,7 +180,7 @@ class des():
             if action == ENCRYPT:
                 tmp = self.xor(self.keys[i], d_e)#If encrypt use Ki
             else:
-                tmp = self.xor(self.keys[15-i], d_e)#If decrypt start by the last key
+                tmp = self.xor(self.keys[rounds-1-i], d_e)#If decrypt start by the last key
             tmp = self.substitute(tmp) #Method that will apply the SBOXes
             tmp = self.permut(tmp, P)
             tmp = self.xor(g, tmp)
@@ -249,3 +249,4 @@ if __name__ == '__main__':
     r2 = d.decrypt(key,r)
     print("Ciphered: %r" % r)
     print("Deciphered: ", r2)
+    print(text == r2)
