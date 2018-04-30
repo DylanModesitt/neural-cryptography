@@ -7,7 +7,6 @@ from keras.layers import (
     Flatten,
     Dense
 )
-from Crypto.Cipher import DES
 
 # self
 from models.adversarial.eve import Eve, AdversarialGame
@@ -19,7 +18,6 @@ from general.utils import join_list_valued_dictionaries, replace_encryptions_wit
 @dataclass
 class DES_ECB(Eve):
     """
-    TODO
     This is an adversarial model to detect a broken encryption
     method that is one-time pad where all the data uses the same
     key.
@@ -66,8 +64,8 @@ class DES_ECB(Eve):
 
     def __call__(self,
                  epochs=50,
-                 iterations_per_epoch=300,
-                 batch_size=512,
+                 iterations_per_epoch=20,
+                 batch_size=100,
                  rounds=16):
 
         key = np.random.randint(0, 2, size=(self.message_length,))
@@ -77,15 +75,10 @@ class DES_ECB(Eve):
         for i in range(0, epochs):
 
             print('\n epoch', i)
-            # TODO
-            P, C = gen_des_ecb_data(2000,#iterations_per_epoch*batch_size,
+            P, C = gen_des_ecb_data(iterations_per_epoch*batch_size,
                                        self.message_length,
                                        key,
                                        rounds)
-#            P, C = gen_broken_otp_data(iterations_per_epoch*
-                                       #batch_size,
-                                       #self.message_length,
-                                       #key)
 
             # replace to play game
             P, C, Y = replace_encryptions_with_random_entries(P, C)
@@ -115,4 +108,3 @@ if __name__ == '__main__':
     model = DES_ECB()
     model(epochs=10)
     model.visualize()
-    pass
