@@ -151,7 +151,7 @@ class des():
         self.keys = list()
         
     def run(self, key, text, action=ENCRYPT, padding=False,rounds=4):
-        print(rounds, "")
+        #print(rounds, "")
         # if len(key) < 8:
         #     raise "Key Should be 8 bytes long"
         # elif len(key) > 8:
