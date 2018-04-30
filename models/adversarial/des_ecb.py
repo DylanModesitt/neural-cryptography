@@ -19,7 +19,7 @@ from general.utils import join_list_valued_dictionaries, replace_encryptions_wit
 class DES_ECB(Eve):
     """
     This is an adversarial model to detect a broken encryption
-    method that is one-time pad where all the data uses the same
+    method that is DES ECB where all the data uses the same
     key.
 
     ******** Parameters
