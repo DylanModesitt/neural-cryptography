@@ -54,13 +54,14 @@ def nanify_dict_of_lists(dict_):
     return {k: [float('nan')]*len(v) for k, v in dict_.items()}
 
 
-def replace_encryptions_with_random_entries(P, C, fraction=1/2, real_label=1):
+def replace_encryptions_with_random_entries(P, C, fraction=1/2, real_label=0):
 
     split = len(P) // (int(1/fraction))
     Y = np.ones(len(P)) if real_label == 1 else np.zeros(len(P))
-    C[:split] = np.random.randint(0, 2, size=(split, P.shape[1]))
+    C[:split] = (np.random.randint(0, 2, size=(split, P.shape[1]))*2)-1
     Y[:split] = 0 if real_label == 1 else 1
 
+    np.set_printoptions(edgeitems=16)
     # re-shuffle
     p = np.random.permutation(len(P))
     P = P[p]

@@ -63,3 +63,19 @@ def gen_des_ecb_data(n, length, key, rounds):
     d = des()
     c = np.vstack([d.encrypt(key, t, rounds=rounds)] for t in p)
     return (2 * p - 1, 2 * c - 1)
+
+def gen_secure_otp_data(n, length):
+    """
+    generate n samples of two random bit strings of
+    the same length
+
+    :param n: the number of samples
+    :param length: the length of each bit string
+    :return: input_1, input_2, xor result
+    """
+    a = np.random.randint(0, 2, size=(n, length))
+    b = np.random.randint(0, 2, size=(n, length))
+    xor = a ^ b
+
+    return (a*2-1,
+            xor*2-1)
