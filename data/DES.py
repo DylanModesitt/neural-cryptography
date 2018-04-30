@@ -151,6 +151,7 @@ class des():
         self.keys = list()
         
     def run(self, key, text, action=ENCRYPT, padding=False,rounds=4):
+        print(rounds, "")
         # if len(key) < 8:
         #     raise "Key Should be 8 bytes long"
         # elif len(key) > 8:
@@ -172,7 +173,7 @@ class des():
         # for block in text_blocks:#Loop over all the blocks of data
             # block = string_to_bit_array(block)#Convert the block in bit array
         block = self.permut(block,PI)#Apply the initial permutation
-        print(block)
+        #print(block)
         g, d = np.split(np.array(block), 2) #g(LEFT), d(RIGHT)
         tmp = None
         for i in range(rounds): #Do the specified number of rounds
@@ -235,8 +236,8 @@ class des():
         pad_len = ord(data[-1])
         return data[:-pad_len]
     
-    def encrypt(self, key, text, padding=False):
-        return self.run(key, text, ENCRYPT, padding)
+    def encrypt(self, key, text, rounds=16, padding=False):
+        return self.run(key, text, ENCRYPT, padding, rounds)
     
     def decrypt(self, key, text, padding=False):
         return self.run(key, text, DECRYPT, padding)
@@ -247,6 +248,4 @@ if __name__ == '__main__':
     d = des()
     r = d.encrypt(key,text)
     r2 = d.decrypt(key,r)
-    print("Ciphered: %r" % r)
-    print("Deciphered: ", r2)
-    print(text == r2)
+    print("ewoifqjweoif")

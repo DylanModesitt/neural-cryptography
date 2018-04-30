@@ -12,7 +12,7 @@ from Crypto.Cipher import DES
 # self
 from models.adversarial.eve import Eve, AdversarialGame
 from general.layers import ElementWise
-from data.data import gen_broken_otp_data
+from data.data import gen_des_ecb_data
 from general.utils import join_list_valued_dictionaries, replace_encryptions_with_random_entries
 
 
@@ -29,7 +29,7 @@ class DES_ECB(Eve):
     message_length: the message length (and key length)
     """
 
-    message_length: int = 16
+    message_length: int = 64
 
     def initialize_model(self):
 
@@ -67,7 +67,8 @@ class DES_ECB(Eve):
     def __call__(self,
                  epochs=50,
                  iterations_per_epoch=300,
-                 batch_size=512):
+                 batch_size=512,
+                 rounds=16):
 
         key = np.random.randint(0, 2, size=(self.message_length,))
         self.print("using key:", key)
@@ -77,10 +78,14 @@ class DES_ECB(Eve):
 
             print('\n epoch', i)
             # TODO
-#            P, C = gen_broken_otp_data(iterations_per_epoch*
-                                       batch_size,
+            P, C = gen_des_ecb_data(2000,#iterations_per_epoch*batch_size,
                                        self.message_length,
-                                       key)
+                                       key,
+                                       rounds)
+#            P, C = gen_broken_otp_data(iterations_per_epoch*
+                                       #batch_size,
+                                       #self.message_length,
+                                       #key)
 
             # replace to play game
             P, C, Y = replace_encryptions_with_random_entries(P, C)
@@ -107,7 +112,7 @@ class DES_ECB(Eve):
 
 if __name__ == '__main__':
 
-    #model = OTPSameKey()
-    #model(epochs=10)
-    #model.visualize()
+    model = DES_ECB()
+    model(epochs=10)
+    model.visualize()
     pass
