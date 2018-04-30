@@ -112,7 +112,7 @@ class MultiAgentDecryption(NeuralCryptographyModel):
 
     def __post_init__(self):
         self.n = self.message_length + self.key_length
-        super(GAN, self).__post_init__()
+        super(MultiAgentDecryption, self).__post_init__()
 
     def __call__(self,
                  epochs=50,

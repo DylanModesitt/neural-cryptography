@@ -3,13 +3,18 @@ from enum import Enum
 from abc import ABC, abstractmethod
 
 # lib
+import numpy as np
 from keras.layers import Input
 from dataclasses import dataclass
 
 # self
 from models.model import NeuralCryptographyModel
 from data.data import gen_symmetric_encryption_data
-from general.utils import replace_encryptions_with_random_entries
+from general.utils import (
+    replace_encryptions_with_random_entries,
+    join_list_valued_dictionaries,
+    nanify_dict_of_lists
+)
 
 
 class DiscriminatorGame(Enum):
@@ -63,6 +68,8 @@ class GAN(NeuralCryptographyModel, ABC):
     key_length: int = 16
     discrimination_mode: DiscriminatorGame = DiscriminatorGame.DetectEncryption
 
+    discriminator_real_label = 0
+
     def initialize_model(self):
         """
         Initialize the GAN by the given rules and configuration.
@@ -94,10 +101,13 @@ class GAN(NeuralCryptographyModel, ABC):
         # it and give it to the generator initialization.
 
         frozen_discriminator = discriminator
-        for layer in frozen_discriminator:
+        for layer in frozen_discriminator.layers:
             layer.trainable = False
 
-        self.generator = self.initialize_discriminator(frozen_discriminator, message_input, key_input)
+        self.discriminator = discriminator
+        self.generator, self.encryptor = self.initialize_generator(frozen_discriminator,
+                                                                   message_input,
+                                                                   key_input)
 
         return [self.generator, self.discriminator]
 
@@ -215,9 +225,14 @@ class GAN(NeuralCryptographyModel, ABC):
                                                        batch_size,
                                                        self.message_length)
 
+            results = self.encryptor.predict([msgs, keys])
+            P, C, Y = replace_encryptions_with_random_entries(msgs,
+                                                              results,
+                                                              real_label=self.discriminator_real_label)
+
             return self.discriminator.fit(
-                x=[msgs, keys],
-                y=[msgs, msgs],
+                x=[P, C],
+                y=Y,
                 epochs=1,
                 batch_size=batch_size,
                 verbose=self.verbose
@@ -236,12 +251,11 @@ class GAN(NeuralCryptographyModel, ABC):
                                                        batch_size,
                                                        self.message_length)
 
-            results = self.encryptor.predict([msgs, keys])
-            P, C, Y = replace_encryptions_with_random_entries(msgs, results)
+            real_labels = np.zeros(len(msgs)) if self.discriminator_real_label == 1 else np.ones(len(msgs))
 
-            return self.discriminator.fit(
-                x=[P, C],
-                y=Y,
+            return self.generator.fit(
+                x=[msgs, keys],
+                y=[msgs, real_labels],
                 epochs=1,
                 batch_size=batch_size,
                 verbose=self.verbose
@@ -253,9 +267,9 @@ class GAN(NeuralCryptographyModel, ABC):
     def __call__(self,
                  epochs=50,
                  generator_prefit_epochs=10,
-                 discriminator_postfit_epochs=50,
-                 discriminator_minbatch_multiplier=2,
-                 iterations_per_epoch=100,
+                 discriminator_postfit_epochs=10,
+                 discriminator_minbatch_multiplier=1,
+                 iterations_per_epoch=500,
                  batch_size=512):
         """
         fit the model around randomly generated message/key pairs. The
@@ -272,8 +286,67 @@ class GAN(NeuralCryptographyModel, ABC):
                  float('nan') values.
         """
 
-        # TODO 
-        pass
+        g_h = []
+        d_h = []
+
+        for i in range(generator_prefit_epochs):
+
+            print('generator prefit epoch', i)
+
+            history = self.fit_generator(iterations_per_epoch,
+                               batch_size)
+
+            g_h.append(history)
+            d_h.append(nanify_dict_of_lists(history))
+
+            self.save()
+
+        for i in range(epochs):
+
+            print('epoch ', '{}/{}'.format(i+1, epochs))
+
+            g_history = self.fit_generator(iterations_per_epoch,
+                                           batch_size)
+
+            g_h.append(g_history)
+
+            d_history = self.fit_discriminator(iterations_per_epoch,
+                                               discriminator_minbatch_multiplier * batch_size)
+
+            d_h.append(d_history)
+
+            self.save()
+
+        for i in range(discriminator_postfit_epochs):
+
+            print('discriminator postfit epoch', i)
+
+            history = self.fit_discriminator(iterations_per_epoch,
+                                             discriminator_minbatch_multiplier * batch_size)
+
+            d_h.append(history)
+            g_h.append(nanify_dict_of_lists(history))
+
+            self.save()
+
+        history = self.generate_cohesive_history({
+            'generator': join_list_valued_dictionaries(*g_h),
+            'discriminator': join_list_valued_dictionaries(*d_h)
+        })
+
+        self.history = history
+
+        return history
+
+
+
+
+
+
+
+
+
+
 
 
 
