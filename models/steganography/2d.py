@@ -69,7 +69,7 @@ class Steganography2D(NeuralCryptographyModel):
     conv_filters: int = 50
     convolution_dimmensions: Tuple[int] = (3, 4, 5)
 
-    beta = 0.75
+    beta = 1
 
     def initialize_model(self):
 
@@ -133,7 +133,8 @@ class Steganography2D(NeuralCryptographyModel):
         hiding_conv_large = Conv2D(self.conv_filters, kernel_size=d_large, **conv_params)(hiding_cat)
         hiding_final = Concatenate(name='hidden')([hiding_conv_small, hiding_conv_medium, hiding_conv_large])
 
-        hidden_secret = Conv2D(filters=self.cover_channels, kernel_size=1, **conv_params)(hiding_final)
+        hidden_secret = Conv2D(filters=self.cover_channels, kernel_size=1, name='hidden_secret',
+                               **conv_params)(hiding_final)
 
         ################################
         # Reveal Network
@@ -161,7 +162,8 @@ class Steganography2D(NeuralCryptographyModel):
         reveal_conv_large = Conv2D(self.conv_filters, kernel_size=d_large, **conv_params)(reveal_cat)
         reveal_final = Concatenate(name='revealed')([reveal_conv_small, reveal_conv_medium, reveal_conv_large])
 
-        reveal_cover = Conv2D(filters=self.secret_channels, kernel_size=1, **conv_params)(reveal_final)
+        reveal_cover = Conv2D(filters=self.secret_channels, kernel_size=1, name='reconstructed_secret',
+                              **conv_params)(reveal_final)
 
         ################################
         # Deep Steganography Network
@@ -188,8 +190,8 @@ class Steganography2D(NeuralCryptographyModel):
         histories = []
         for i in range(0, epochs):
 
-            print('epoch [ %s / %s]' % (i, epochs))
-            print('>> gennerating data')
+            print('epoch [ %s / %s]' % (i+1, epochs))
+            print('>> generating data')
             covers, secrets = load_image_covers_and_bit_secrets(iterations_per_epoch*batch_size)
 
             print('>> fitting')
