@@ -129,7 +129,7 @@ def load_images(path='./data/images/',
     return x
 
 
-DEFAULT_SECRET_SCALER = lambda x: x / 4
+DEFAULT_SECRET_SCALER = lambda x: x
 def load_image_covers_and_bit_secrets(how_many,
                                       image_dir='./data/images',
                                       secret_modifier=DEFAULT_SECRET_SCALER,

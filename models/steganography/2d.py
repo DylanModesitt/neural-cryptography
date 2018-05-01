@@ -162,7 +162,7 @@ class Steganography2D(NeuralCryptographyModel):
         reveal_final = Concatenate(name='revealed')([reveal_conv_small, reveal_conv_medium, reveal_conv_large])
 
         reveal_cover = Conv2D(filters=self.secret_channels, kernel_size=1, name='reconstructed_secret',
-                              padding='same')(reveal_final)
+                              padding='same', activation='sigmoid')(reveal_final)
 
         ################################
         # Deep Steganography Network
@@ -171,7 +171,7 @@ class Steganography2D(NeuralCryptographyModel):
         self.model = Model(inputs=[cover_input, secret_input], outputs=[hidden_secret, reveal_cover])
         self.model.compile(
             optimizer=Adam(),
-            loss=['mae', 'mae'],
+            loss=['mae', 'binary_crossentropy'],
             loss_weights=[1, self.beta]
         )
 
