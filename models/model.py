@@ -151,7 +151,7 @@ class NeuralCryptographyModel(ABC):
         if not os.path.exists(visualization_dir):
             os.makedirs(visualization_dir)
 
-        unspecified = set(self.history.keys()) - set().union(metrics_to_mix)
+        unspecified = set(self.history.keys()) - set().union([e for i in metrics_to_mix for e in i])
         metrics = list(metrics_to_mix) + [[e] for e in unspecified]
 
         for metric_set in metrics:
@@ -168,13 +168,12 @@ class NeuralCryptographyModel(ABC):
                 metric_set_name = metric_set[0]
                 metric_set_name.replace('val_', '')
 
-                plt.title('model ' + metric_set_name)
-                plt.ylabel(metric_set_name)
-                plt.xlabel('epoch')
-                plt.legend(legend, loc='upper right')
-
-                plt.savefig(os.path.join(visualization_dir, ','.join(metric_set) + '.png'))
-                plt.clf()
+            plt.title('model ' + metric_set_name)
+            plt.ylabel(metric_set_name)
+            plt.xlabel('epoch')
+            plt.legend(legend, loc='upper right')
+            plt.savefig(os.path.join(visualization_dir, ','.join(metric_set) + '.png'))
+            plt.clf()
 
     @staticmethod
     def generate_cohesive_history(histories):

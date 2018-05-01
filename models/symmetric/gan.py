@@ -268,6 +268,7 @@ class GAN(NeuralCryptographyModel, ABC):
                  epochs=50,
                  generator_prefit_epochs=10,
                  discriminator_postfit_epochs=10,
+                 generator_minbatch_multiplier=1,
                  discriminator_minbatch_multiplier=1,
                  iterations_per_epoch=500,
                  batch_size=512):
@@ -305,7 +306,7 @@ class GAN(NeuralCryptographyModel, ABC):
 
             print('epoch ', '{}/{}'.format(i+1, epochs))
 
-            g_history = self.fit_generator(iterations_per_epoch,
+            g_history = self.fit_generator(iterations_per_epoch * generator_minbatch_multiplier,
                                            batch_size)
 
             g_h.append(g_history)

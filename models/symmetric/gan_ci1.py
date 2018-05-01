@@ -11,8 +11,7 @@ from keras.layers import (
 
 from keras.models import Model
 from keras.optimizers import Adam
-from keras.losses import mean_absolute_error
-from keras.metrics import binary_accuracy
+from keras.losses import mean_absolute_error, binary_crossentropy
 
 # self
 from general.layers import ElementWise
@@ -35,12 +34,12 @@ class EncryptionDetectionGAN(GAN):
 
     This game is somewhat based on the CPA game.
     """
-    alice_bitwise_latent_dims: Sequence[int] = (8, 1)
-    bob_bitwise_latent_dims: Sequence[int] = (8, 1)
-    alice_share_bitwise_weights: bool = False
-    bob_share_bitwise_weights: bool = False
+    alice_bitwise_latent_dims: Sequence[int] = (12, 1)
+    bob_bitwise_latent_dims: Sequence[int] = (12, 1)
+    alice_share_bitwise_weights: bool = True
+    bob_share_bitwise_weights: bool = True
 
-    tie_alice_and_bob = False
+    tie_alice_and_bob = True
 
     eve_bitwise_latent_dims: Sequence[int] = (32, 8, 1)
     eve_latent_dim: Sequence[int] = (32,)
@@ -92,21 +91,46 @@ class EncryptionDetectionGAN(GAN):
 
         message_input, key_input = inputs
 
-        alice_encryption = Flatten()(
-            ElementWise(self.alice_bitwise_latent_dims, activation='tanh',
-                        share_element_weights=self.alice_share_bitwise_weights)([
-                message_input,
-                key_input
-            ])
-        )
+        if self.tie_alice_and_bob:
 
-        bob_decryption = Flatten(name='decryption')(
-            ElementWise(self.bob_bitwise_latent_dims, activation='tanh',
-                        share_element_weights=self.bob_share_bitwise_weights)([
-                alice_encryption,
-                key_input
-            ]),
-        )
+            if self.alice_share_bitwise_weights != self.bob_share_bitwise_weights:
+                raise ValueError('bob and alice are tied however they do not '
+                                 'have the same weight sharing settings.')
+
+            enc_dec = ElementWise(self.alice_bitwise_latent_dims, activation='tanh',
+                                  share_element_weights=self.alice_share_bitwise_weights)
+
+            alice_encryption = Flatten()(
+                enc_dec([
+                    message_input,
+                    key_input
+                ])
+            )
+
+            bob_decryption = Flatten(name='decryption')(
+                enc_dec([
+                    alice_encryption,
+                    key_input
+                ]),
+            )
+
+        else:
+
+            alice_encryption = Flatten(name='decryption')(
+                ElementWise(self.bob_bitwise_latent_dims, activation='tanh',
+                            share_element_weights=self.bob_share_bitwise_weights)([
+                    message_input,
+                    key_input
+                ]),
+            )
+
+            bob_decryption = Flatten(name='decryption')(
+                ElementWise(self.bob_bitwise_latent_dims, activation='tanh',
+                            share_element_weights=self.bob_share_bitwise_weights)([
+                    alice_encryption,
+                    key_input
+                ]),
+            )
 
         eves_opinion = discriminator([message_input, alice_encryption])
 
@@ -114,10 +138,10 @@ class EncryptionDetectionGAN(GAN):
         alice_bob = Model(inputs=inputs, outputs=[bob_decryption, eves_opinion])
 
         def discriminator_loss(y_true, y_pred):
-            return K.abs(0.5 - binary_accuracy(y_true, y_pred)) ** 2
+            return K.abs(0.5 - K.mean(y_pred))
 
-        alice_bob.compile(optimizer=Adam(lr=0.0008),
-                          loss=[mean_absolute_error, discriminator_loss])
+        alice_bob.compile(optimizer=Adam(),
+                          loss=[mean_absolute_error, binary_crossentropy])
 
         return alice_bob, alice
 
@@ -131,8 +155,9 @@ if __name__ == '__main__':
     model = EncryptionDetectionGAN(alice_share_bitwise_weights=True,
                                    bob_share_bitwise_weights=True)
 
-    model(generator_prefit_epochs=5,
+    model(generator_prefit_epochs=2,
           epochs=15,
+          generator_minbatch_multiplier=2,
           discriminator_postfit_epochs=10)
 
     model.visualize()
