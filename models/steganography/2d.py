@@ -3,12 +3,16 @@ import os
 from typing import Sequence, Tuple
 
 # lib
+import numpy as np
 from dataclasses import dataclass
 from keras.layers import (
     Input,
     Conv2D,
     Concatenate,
     BatchNormalization,
+    MaxPooling2D,
+    Flatten,
+    Dense
 )
 from keras.models import Model
 from keras.optimizers import Adam
@@ -70,6 +74,7 @@ class Steganography2D(NeuralCryptographyModel):
     convolution_dimmensions: Tuple[int] = (3, 4, 5)
 
     beta = 2
+    gamma = 1
 
     def initialize_model(self):
 
@@ -165,73 +170,163 @@ class Steganography2D(NeuralCryptographyModel):
                               padding='same', activation='sigmoid')(reveal_final)
 
         ################################
+        # Censorship Network
+        ################################
+
+        censorship_input = Input(shape=(self.cover_height, self.cover_width, self.cover_channels))
+
+        cen = Conv2D(32, (3, 3), activation='relu', padding='same')(censorship_input)
+        cen = Conv2D(32, (3, 3), activation='relu', padding='same')(cen)
+        cen = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(cen)
+
+        # Block 2
+        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
+        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
+        cen = MaxPooling2D((2, 2), strides=(2, 2), name='block2_pool')(cen)
+
+        # Block 3
+        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
+        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
+        cen = MaxPooling2D((2, 2), strides=(2, 2), name='block3_pool')(cen)
+
+        # Block 4
+        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
+        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
+        cen = MaxPooling2D((2, 2), strides=(2, 2), name='block4_pool')(cen)
+
+        # Block 5
+        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
+        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
+        cen = MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(cen)
+
+        # Classification block
+        cen = Flatten(name='flatten')(cen)
+        cen = Dense(1024, activation='relu', name='fc1')(cen)
+        cen = Dense(1, activation='sigmoid', name='censor_prediction')(cen)
+
+        self.censorship_model = Model(inputs=censorship_input, outputs=cen, name='censorship_detection')
+        self.censorship_model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=['acc'])
+
+        ################################
         # Deep Steganography Network
         ################################
+
+        self.hiding_model = Model(inputs=[cover_input, secret_input], outputs=[hidden_secret])
 
         self.reveal_model = Model(inputs=[cover_input, secret_input], outputs=[reveal_cover])
         self.reveal_model.compile(
             optimizer=Adam(),
             loss=['binary_crossentropy'],
-            # loss_weights=[1, self.beta]
         )
 
-        self.model = Model(inputs=[cover_input, secret_input], outputs=[hidden_secret, reveal_cover])
-        self.model.compile(
+        self.steganography_model = Model(inputs=[cover_input, secret_input], outputs=[hidden_secret, reveal_cover])
+        self.steganography_model.compile(
             optimizer=Adam(),
             loss=['mae', 'binary_crossentropy'],
             loss_weights=[1, self.beta]
         )
 
-        if self.verbose > 0:
-            self.model.summary()
-            # plot_model(self.model, to_file=os.path.join(self.dir, 'model.png'))
+        for layer in self.censorship_model.layers:
+            layer.trainable = False
 
-        return [self.model]
+        self.adversarial_model = Model(inputs=[cover_input, secret_input],
+                                       outputs=[hidden_secret, reveal_cover, self.censorship_model([hidden_secret])],
+                                       name='seganography_and_adversary')
+
+        self.adversarial_model.compile(
+            optimizer=Adam(),
+            loss=['mae', 'binary_crossentropy', 'binary_crossentropy'],
+            loss_weights=[1, self.beta, self.gamma],
+        )
+
+        if self.verbose > 0:
+            self.adversarial_model.summary()
+            # plot_model(self.adversarial_model, to_file=os.path.join(self.dir, 'model.png'))
+
+        return [self.adversarial_model]
 
     def __call__(self,
-                 epochs=50,
-                 prefit_secret_epochs=2,
+                 prefit_decryptionn_epochs=2,
+                 steganography_epochs=10,
+                 adversarial_epochs=10,
                  iterations_per_epoch=100,
-                 batch_size=32):
+                 batch_size=2):
 
-        histories = []
+        for i in range(0, prefit_decryptionn_epochs):
 
-        for i in range(0, prefit_secret_epochs):
-
-            print('epoch [ %s / %s]' % (i+1, epochs))
-            print('>> generating data')
+            self.print('epoch [ %s / %s]' % (i+1, prefit_decryptionn_epochs))
+            self.print('>> generating data')
             covers, secrets = load_image_covers_and_bit_secrets(iterations_per_epoch*batch_size)
 
             print('>> fitting')
-            histories.append(self.reveal_model.fit(
+            reveal_history = self.reveal_model.fit(
                 x=[covers, secrets],
                 y=[secrets],
                 batch_size=batch_size,
                 epochs=1,
                 verbose=self.verbose
-            ).history)
+            ).history
 
-        for i in range(0, epochs):
+        for i in range(0, steganography_epochs):
 
-            print('epoch [ %s / %s]' % (i+1, epochs))
-            print('>> generating data')
+            self.print('epoch [ %s / %s]' % (i+1, steganography_epochs))
+            self.print('>> generating data')
             covers, secrets = load_image_covers_and_bit_secrets(iterations_per_epoch*batch_size)
 
-            print('>> fitting')
-            histories.append(self.model.fit(
+            self.print('>> fitting')
+            steganography_history = self.steganography_model.fit(
                 x=[covers, secrets],
                 y=[covers, secrets],
                 batch_size=batch_size,
                 epochs=1,
                 verbose=self.verbose
-            ).history)
+            ).history
 
-        history = self.generate_cohesive_history({
-            'deep_steg': join_list_valued_dictionaries(*histories)
-        })
+        for i in range(0, adversarial_epochs):
 
-        self.history = history
-        return history
+            self.print('epoch [ %s / %s]' % (i+1, steganography_epochs))
+
+            self.print('>> generating data')
+
+            # gen covers/secrets
+            covers, secrets = load_image_covers_and_bit_secrets(iterations_per_epoch*batch_size)
+            # gen steg(cover, segret)
+            hidden_secrets = self.hiding_model.predict([covers, secrets])
+
+            # replace half (randomly) the covers with the hidden secret result
+            p = np.random.permutation(len(covers))
+            covers, secrets, hidden_secrets = covers[p], secrets[p], hidden_secrets[p]
+            y = np.zeros(len(covers))
+            covers[:int(len(covers)/2)] = hidden_secrets[:int(len(covers)/2)]
+            y[:int(len(covers)/2)] = 1
+
+            # re-shuffle
+            p = np.random.permutation(len(covers))
+            covers, secrets, y = covers[p], secrets[p], y[p]
+
+            censorship_history = self.censorship_model.fit(
+                x=[covers],
+                y=[y],
+                batch_size=batch_size,
+                epochs=1,
+                verbose=self.verbose
+            )
+
+            self.print('>> generating data')
+            covers, secrets = load_image_covers_and_bit_secrets(iterations_per_epoch*batch_size)
+
+            self.print('>> fitting')
+            adverarial_history = self.adversarial_model.fit(
+                x=[covers, secrets],
+                y=[covers, secrets, np.zeros(len(covers))],
+                batch_size=batch_size,
+                epochs=1,
+                verbose=self.verbose
+            ).history
+
+
+
+        return None
 
 
 if __name__ == '__main__':
