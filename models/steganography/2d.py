@@ -162,7 +162,7 @@ class Steganography2D(NeuralCryptographyModel):
         reveal_final = Concatenate(name='revealed')([reveal_conv_small, reveal_conv_medium, reveal_conv_large])
 
         reveal_cover = Conv2D(filters=self.secret_channels, kernel_size=1, name='reconstructed_secret',
-                              padding='same', activation='sigmoid')(reveal_final)
+                              padding='same')(reveal_final)
 
         ################################
         # Deep Steganography Network
