@@ -129,8 +129,10 @@ def load_images(path='./data/images/',
     return x
 
 
+DEFAULT_SECRET_SCALER = lambda x: x / 4
 def load_image_covers_and_bit_secrets(how_many,
                                       image_dir='./data/images',
+                                      secret_modifier=DEFAULT_SECRET_SCALER,
                                       bit_channels=1):
     """
     load image covers and random bit secrets. The images
@@ -153,7 +155,7 @@ def load_image_covers_and_bit_secrets(how_many,
     secret_shape = covers.shape[:-1]
     secrets = np.random.randint(0, 2, size=(*secret_shape, bit_channels))
 
-    return covers, secrets
+    return covers, secret_modifier(secrets)
 
 
 
