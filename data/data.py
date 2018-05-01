@@ -1,8 +1,15 @@
-import numpy as np
-from data.DES import des
-import os
+# system
 import sys
+import os
+import math
+
+# lib
+import numpy as np
 from keras.preprocessing.image import img_to_array, load_img
+
+# self
+from data.DES import des
+
 
 def gen_symmetric_encryption_data(n, msg_len=16, key_len=16):
     """
@@ -97,16 +104,59 @@ def gen_secure_otp_data(n, length):
     return (a*2-1,
             xor*2-1)
 
-def load_images():
+
+def load_images(path='./data/images/',
+                shuffle=False,
+                scale=1/255.):
     """
     load images into numpy array from /images directory
 
     :return: a 4d array of numpy images: (shape, height, width, channels=3)
     """
     images = []
-    for file in os.listdir('./data/images/'):
+    for file in os.listdir(path):
         if 'jpg' in file.lower() or 'png' in file.lower():
             img = load_img(os.path.join(path, file))
             image = img_to_array(img)
             images.append(image)
-    return np.array(images)
+
+    x = np.array(images)
+
+    if shuffle:
+        x = x[np.random.permutation(len(x))]
+
+    x *= scale
+    return x
+
+
+def load_image_covers_and_bit_secrets(how_many,
+                                      image_dir='./data/images',
+                                      bit_channels=1):
+    """
+    load image covers and random bit secrets. The images
+    will be a random section of the images in data/images
+
+    :param how_many: how many covers/secrets
+    :param image_dir: the image directory
+    :param bit_channels: the number of channels in the bits
+    :return: the covers and channels
+    """
+
+    covers = load_images(image_dir, shuffle=True)
+
+    if how_many > len(covers):
+        covers = np.vstack([covers]*int(math.ceil(how_many/len(covers))))
+
+    covers = covers[:how_many]
+    covers = covers[np.random.permutation(len(covers))]
+
+    secret_shape = covers.shape[:-1]
+    secrets = np.random.randint(0, 2, size=(*secret_shape, bit_channels))
+
+    return covers, (secrets*2)-1
+
+
+
+
+
+
