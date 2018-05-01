@@ -253,6 +253,11 @@ class Steganography2D(NeuralCryptographyModel):
                  iterations_per_epoch=100,
                  batch_size=32):
 
+        r_history = []  # the reveal network
+        s_history = []  # the entire stego network
+        c_history = []  # the censorship network
+        gan_history = []  # the gan history
+
         for i in range(0, prefit_decryptionn_epochs):
 
             self.print('epoch [ %s / %s]' % (i+1, prefit_decryptionn_epochs))
@@ -268,6 +273,8 @@ class Steganography2D(NeuralCryptographyModel):
                 verbose=self.verbose
             ).history
 
+            r_history.append(reveal_history)
+
         for i in range(0, steganography_epochs):
 
             self.print('epoch [ %s / %s]' % (i+1, steganography_epochs))
@@ -282,6 +289,8 @@ class Steganography2D(NeuralCryptographyModel):
                 epochs=1,
                 verbose=self.verbose
             ).history
+
+            s_history.append(steganography_history)
 
         for i in range(0, censorship_discriminator_epochs):
 
@@ -299,6 +308,8 @@ class Steganography2D(NeuralCryptographyModel):
                 epochs=1,
                 verbose=self.verbose
             )
+
+            c_history.append(censorship_history)
 
         for i in range(0, adversarial_epochs):
 
@@ -319,6 +330,8 @@ class Steganography2D(NeuralCryptographyModel):
                 verbose=self.verbose
             )
 
+            c_history.append(censorship_history)
+
             self.print('>> generating data')
             covers, secrets = load_image_covers_and_bit_secrets(iterations_per_epoch*batch_size)
 
@@ -331,13 +344,24 @@ class Steganography2D(NeuralCryptographyModel):
                 verbose=self.verbose
             ).history
 
+            gan_history.append(adverarial_history)
 
+        history = self.generate_cohesive_history({
+            'reveal network (decode)': join_list_valued_dictionaries(*r_history),
+            'steganography network (hide + reveal)': join_list_valued_dictionaries(*s_history),
+            'censorship network': join_list_valued_dictionaries(*c_history),
+            'steganography network + censorship network (GAN)': join_list_valued_dictionaries(*gan_history)
+        })
 
-        return None
+        self.history = history
+
+        return history
+
 
 
 if __name__ == '__main__':
 
     model = Steganography2D()
     model()
+    model.visualize()
 
