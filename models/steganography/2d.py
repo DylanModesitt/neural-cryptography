@@ -356,8 +356,7 @@ class Steganography2D(NeuralCryptographyModel):
         self.history = history
 
         return history
-
-
+    
 
 if __name__ == '__main__':
 
