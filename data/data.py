@@ -1,5 +1,4 @@
 import numpy as np
-#from Crypto.Cipher import DES
 from data.DES import des
 
 def gen_symmetric_encryption_data(n, msg_len=16, key_len=16):
@@ -48,6 +47,21 @@ def gen_broken_otp_data(n, length, key):
 
     return (a*2-1,
             xor*2-1)
+
+def gen_reduced_des_ecb_data(amt, n, length, key, rounds):
+    """
+    generate amt plaintext/DES ECB ciphertext pairs n times
+
+    :param n: the number of samples
+    :param length: the length of each bit string
+    :param key: The key. len(key) == length
+    :param rounds: The number of DES rounds to run
+    :return: messages, encryptions
+    """
+    p = np.vstack([np.random.randint(2,size=(64)) for j in range(amt)] for i in range(int(n/amt)))
+    d = des()
+    c = np.vstack([d.encrypt(key, t, rounds=rounds)] for t in p)
+    return (2 * p - 1, 2 * c - 1)
 
 def gen_des_ecb_data(n, length, key, rounds):
     """

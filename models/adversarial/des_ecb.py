@@ -1,21 +1,16 @@
 # lib
 import numpy as np
-import pydot
 from dataclasses import dataclass
 from keras.models import Sequential
-from keras.models import Model
 from keras.layers import (
     Input,
-    Flatten,
     Dense,
     Merge
 )
-from keras.utils import plot_model
 
 # self
 from models.adversarial.eve import Eve, AdversarialGame
-from general.layers import ElementWise
-from data.data import gen_des_ecb_data
+from data.data import gen_des_ecb_data, gen_reduced_des_ecb_data
 from general.utils import join_list_valued_dictionaries, replace_encryptions_with_random_entries
 
 
@@ -52,7 +47,6 @@ class DES_ECB(Eve):
         model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])
 
         self.model = model
-        plot_model(model, to_file='model.png')
 
         return [model]
 
@@ -62,27 +56,35 @@ class DES_ECB(Eve):
 
     def __call__(self,
                  epochs=50,
-                 iterations_per_epoch=200,
-                 batch_size=100,
+                 iterations_per_epoch=250,
+                 batch_size=128,
                  rounds=2):
 
         key = np.random.randint(0, 2, size=(self.message_length,))
         self.print("using key:", key)
 
         histories = []
-        for i in range(0, epochs):
 
-            print('\n epoch', i)
-            P, C = gen_des_ecb_data(iterations_per_epoch*batch_size,
+        P, C = gen_reduced_des_ecb_data(1, iterations_per_epoch*batch_size,
                                        self.message_length,
                                        key,
                                        rounds)
 
+        for i in range(0, epochs):
+
+            print('\n epoch', i)
+            """
+            P, C = gen_des_ecb_data(iterations_per_epoch*batch_size,
+                                       self.message_length,
+                                       key,
+                                       rounds)
+            """
+
             # replace to play game
-            P, C, Y = replace_encryptions_with_random_entries(P, C)
+            P2, C2, Y = replace_encryptions_with_random_entries(P, C)
 
             history = self.model.fit(
-                x=[P, C],
+                x=[P2, C2],
                 y=Y,
                 verbose=self.verbose,
                 epochs=1,
@@ -104,5 +106,5 @@ class DES_ECB(Eve):
 if __name__ == '__main__':
 
     model = DES_ECB()
-    model(epochs=10)
+    model(epochs=5)
     model.visualize()
