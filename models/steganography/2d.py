@@ -248,7 +248,7 @@ class Steganography2D(NeuralCryptographyModel):
     def __call__(self,
                  prefit_decryptionn_epochs=2,
                  steganography_epochs=10,
-                 censorship_discriminator_epochs=5,
+                 censorship_discriminator_epochs=2,
                  adversarial_epochs=10,
                  iterations_per_epoch=100,
                  batch_size=32):
@@ -283,10 +283,26 @@ class Steganography2D(NeuralCryptographyModel):
                 verbose=self.verbose
             ).history
 
+        for i in range(0, censorship_discriminator_epochs):
+
+            self.print('epoch [ %s / %s]' % (i+1, steganography_epochs))
+            self.print('>> generating data')
+
+            covers, secrets = load_image_covers_and_bit_secrets(iterations_per_epoch*batch_size)
+            hidden_secrets = self.hiding_model.predict([covers, secrets])
+            samples, labels = balance_real_and_fake_samples(covers, hidden_secrets)
+
+            censorship_history = self.censorship_model.fit(
+                x=[samples],
+                y=[labels],
+                batch_size=batch_size,
+                epochs=1,
+                verbose=self.verbose
+            )
+
         for i in range(0, adversarial_epochs):
 
             self.print('epoch [ %s / %s]' % (i+1, steganography_epochs))
-
             self.print('>> generating data')
 
             # gen covers/secrets
