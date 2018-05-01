@@ -21,7 +21,7 @@ from keras.utils import plot_model
 # self
 from models.model import NeuralCryptographyModel
 from models.steganography.steganography import SteganographyData
-from general.utils import join_list_valued_dictionaries
+from general.utils import join_list_valued_dictionaries, balance_real_and_fake_samples
 from data.data import load_image_covers_and_bit_secrets
 
 
@@ -73,7 +73,7 @@ class Steganography2D(NeuralCryptographyModel):
     conv_filters: int = 50
     convolution_dimmensions: Tuple[int] = (3, 4, 5)
 
-    beta = 2
+    beta = 1
     gamma = 1
 
     def initialize_model(self):
@@ -248,6 +248,7 @@ class Steganography2D(NeuralCryptographyModel):
     def __call__(self,
                  prefit_decryptionn_epochs=2,
                  steganography_epochs=10,
+                 censorship_discriminator_epochs=5,
                  adversarial_epochs=10,
                  iterations_per_epoch=100,
                  batch_size=32):
@@ -292,21 +293,11 @@ class Steganography2D(NeuralCryptographyModel):
             covers, secrets = load_image_covers_and_bit_secrets(iterations_per_epoch*batch_size)
             # gen steg(cover, segret)
             hidden_secrets = self.hiding_model.predict([covers, secrets])
-
-            # replace half (randomly) the covers with the hidden secret result
-            p = np.random.permutation(len(covers))
-            covers, secrets, hidden_secrets = covers[p], secrets[p], hidden_secrets[p]
-            y = np.zeros(len(covers))
-            covers[:int(len(covers)/2)] = hidden_secrets[:int(len(covers)/2)]
-            y[:int(len(covers)/2)] = 1
-
-            # re-shuffle
-            p = np.random.permutation(len(covers))
-            covers, secrets, y = covers[p], secrets[p], y[p]
+            samples, labels = balance_real_and_fake_samples(covers, hidden_secrets)
 
             censorship_history = self.censorship_model.fit(
-                x=[covers],
-                y=[y],
+                x=[samples],
+                y=[labels],
                 batch_size=batch_size,
                 epochs=1,
                 verbose=self.verbose

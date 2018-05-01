@@ -54,6 +54,34 @@ def nanify_dict_of_lists(dict_):
     return {k: [float('nan')]*len(v) for k, v in dict_.items()}
 
 
+def balance_real_and_fake_samples(real, fake, real_label=0):
+    """
+    given real and fake samples, create a balanced dataset of
+    samples and labels of equal real and fake entries. useful with
+    GANs
+
+    :param real: the real sequence
+    :param fake: the fake sequence
+    :param real_label: the label you want to use for real data
+    :return: samples, labels
+    """
+
+    r_f = np.zeros if real_label == 0 else np.ones
+    f_e = 1 if real_label == 0 else 0
+
+    # replace half (randomly) the covers with the hidden secret result
+    p = np.random.permutation(len(real))
+    real, fake = real[p], fake[p]
+    y = r_f(len(real))
+    real[:int(len(real) / 2)] = fake[:int(len(real) / 2)]
+    y[:int(len(real) / 2)] = f_e
+
+    # re-shuffle
+    p = np.random.permutation(len(real))
+    real, fake, y = real[p], fake[p], y[p]
+
+    return real, y
+
 def replace_encryptions_with_random_entries(P, C, fraction=1/2, real_label=0):
 
     split = len(P) // (int(1/fraction))
