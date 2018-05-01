@@ -168,11 +168,11 @@ class Steganography2D(NeuralCryptographyModel):
         # Deep Steganography Network
         ################################
 
-        self.model = Model(inputs=[cover_input, secret_input], outputs=[hidden_secret, reveal_cover])
+        self.model = Model(inputs=[cover_input, secret_input], outputs=[reveal_cover])
         self.model.compile(
             optimizer=Adam(),
-            loss=['mae', 'binary_crossentropy'],
-            loss_weights=[1, self.beta]
+            loss=['binary_crossentropy'],
+            # loss_weights=[1, self.beta]
         )
 
         if self.verbose > 0:
