@@ -107,7 +107,7 @@ def gen_secure_otp_data(n, length):
 
 def load_images(path='./data/images/',
                 shuffle=False,
-                scale=1/255.):
+                scale=1./255.):
     """
     load images into numpy array from /images directory
 

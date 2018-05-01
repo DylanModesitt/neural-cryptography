@@ -69,7 +69,7 @@ class Steganography2D(NeuralCryptographyModel):
     conv_filters: int = 50
     convolution_dimmensions: Tuple[int] = (3, 4, 5)
 
-    beta = 1
+    beta = 2
 
     def initialize_model(self):
 
