@@ -250,7 +250,7 @@ class Steganography2D(NeuralCryptographyModel):
                  steganography_epochs=10,
                  adversarial_epochs=10,
                  iterations_per_epoch=100,
-                 batch_size=2):
+                 batch_size=32):
 
         for i in range(0, prefit_decryptionn_epochs):
 
