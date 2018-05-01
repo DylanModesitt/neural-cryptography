@@ -196,7 +196,7 @@ class Steganography2D(NeuralCryptographyModel):
             print('>> fitting')
             histories.append(self.model.fit(
                 x=[covers, secrets],
-                y=[covers, secrets],
+                y=[secrets],
                 batch_size=batch_size,
                 epochs=1,
                 verbose=self.verbose
