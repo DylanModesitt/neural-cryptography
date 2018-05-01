@@ -1,4 +1,5 @@
 # system
+import os
 from typing import Sequence, Tuple
 
 # lib
@@ -11,6 +12,7 @@ from keras.layers import (
 )
 from keras.models import Model
 from keras.optimizers import Adam
+from keras.utils import plot_model
 
 # self
 from models.model import NeuralCryptographyModel
@@ -131,7 +133,7 @@ class Steganography2D(NeuralCryptographyModel):
         hiding_conv_large = Conv2D(self.conv_filters, kernel_size=d_large, **conv_params)(hiding_cat)
         hiding_final = Concatenate(name='hidden')([hiding_conv_small, hiding_conv_medium, hiding_conv_large])
 
-        hidden_secret = Conv2D(filters=3, kernel_size=1, **conv_params)(hiding_final)
+        hidden_secret = Conv2D(filters=self.cover_channels, kernel_size=1, **conv_params)(hiding_final)
 
         ################################
         # Reveal Network
@@ -159,7 +161,7 @@ class Steganography2D(NeuralCryptographyModel):
         reveal_conv_large = Conv2D(self.conv_filters, kernel_size=d_large, **conv_params)(reveal_cat)
         reveal_final = Concatenate(name='revealed')([reveal_conv_small, reveal_conv_medium, reveal_conv_large])
 
-        reveal_cover = Conv2D(filters=3, kernel_size=1, **conv_params)(reveal_final)
+        reveal_cover = Conv2D(filters=self.secret_channels, kernel_size=1, **conv_params)(reveal_final)
 
         ################################
         # Deep Steganography Network
@@ -172,22 +174,29 @@ class Steganography2D(NeuralCryptographyModel):
             loss_weights=[1, self.beta]
         )
 
+        if self.verbose > 0:
+            self.model.summary()
+            # plot_model(self.model, to_file=os.path.join(self.dir, 'model.png'))
+
         return [self.model]
 
     def __call__(self,
                  epochs=50,
                  iterations_per_epoch=100,
-                 batch_size=128):
+                 batch_size=32):
 
         histories = []
         for i in range(0, epochs):
 
+            print('epoch [ %s / %s]' % (i, epochs))
+            print('>> gennerating data')
             covers, secrets = load_image_covers_and_bit_secrets(iterations_per_epoch*batch_size)
 
+            print('>> fitting')
             histories.append(self.model.fit(
                 x=[covers, secrets],
                 y=[covers, secrets],
-                batch_size=512,
+                batch_size=batch_size,
                 epochs=1,
                 verbose=self.verbose
             ).history)
