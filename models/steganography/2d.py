@@ -168,11 +168,18 @@ class Steganography2D(NeuralCryptographyModel):
         # Deep Steganography Network
         ################################
 
-        self.model = Model(inputs=[cover_input, secret_input], outputs=[reveal_cover])
-        self.model.compile(
+        self.reveal_model = Model(inputs=[cover_input, secret_input], outputs=[reveal_cover])
+        self.reveal_model.compile(
             optimizer=Adam(),
             loss=['binary_crossentropy'],
             # loss_weights=[1, self.beta]
+        )
+
+        self.model = Model(inputs=[cover_input, secret_input], outputs=[hidden_secret, reveal_cover])
+        self.model.compile(
+            optimizer=Adam(),
+            loss=['mae', 'binary_crossentropy'],
+            loss_weights=[1, self.beta]
         )
 
         if self.verbose > 0:
@@ -183,10 +190,27 @@ class Steganography2D(NeuralCryptographyModel):
 
     def __call__(self,
                  epochs=50,
+                 prefit_secret_epochs=2,
                  iterations_per_epoch=100,
                  batch_size=32):
 
         histories = []
+
+        for i in range(0, prefit_secret_epochs):
+
+            print('epoch [ %s / %s]' % (i+1, epochs))
+            print('>> generating data')
+            covers, secrets = load_image_covers_and_bit_secrets(iterations_per_epoch*batch_size)
+
+            print('>> fitting')
+            histories.append(self.reveal_model.fit(
+                x=[covers, secrets],
+                y=[secrets],
+                batch_size=batch_size,
+                epochs=1,
+                verbose=self.verbose
+            ).history)
+
         for i in range(0, epochs):
 
             print('epoch [ %s / %s]' % (i+1, epochs))
@@ -196,7 +220,7 @@ class Steganography2D(NeuralCryptographyModel):
             print('>> fitting')
             histories.append(self.model.fit(
                 x=[covers, secrets],
-                y=[secrets],
+                y=[covers, secrets],
                 batch_size=batch_size,
                 epochs=1,
                 verbose=self.verbose
