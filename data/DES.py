@@ -175,6 +175,7 @@ class des():
         block = self.permut(block,PI)#Apply the initial permutation
         #print(block)
         g, d = np.split(np.array(block), 2) #g(LEFT), d(RIGHT)
+        g, d = g.tolist(), d.tolist()
         tmp = None
         for i in range(rounds): #Do the specified number of rounds
             d_e = self.expand(d, E) #Expand d to match Ki size (48bits)
@@ -220,6 +221,7 @@ class des():
         key = self.password
         key = self.permut(key, CP_1) #Apply the initial permut on the key
         g, d = np.split(np.array(key), 2) #Split it in to (g->LEFT),(d->RIGHT)
+        g, d = g.tolist(), d.tolist()
         for i in range(16):#Apply the 16 rounds
             g, d = self.shift(g, d, SHIFT[i]) #Apply the shift associated with the round (not always 1)
             tmp = np.concatenate((g,d))
@@ -248,4 +250,3 @@ if __name__ == '__main__':
     d = des()
     r = d.encrypt(key,text)
     r2 = d.decrypt(key,r)
-    print("ewoifqjweoif")
