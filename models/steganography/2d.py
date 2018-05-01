@@ -105,8 +105,6 @@ class Steganography2D(NeuralCryptographyModel):
         prep_conv_large = Conv2D(self.conv_filters, kernel_size=d_large, **conv_params)(prep_cat)
         prep_final = Concatenate()([prep_conv_small, prep_conv_medium, prep_conv_large])
 
-        self.prep_model = Model(inputs=secret_input, outputs=prep_final)
-
         ################################
         # Hiding Network
         ################################
@@ -133,7 +131,6 @@ class Steganography2D(NeuralCryptographyModel):
         hiding_conv_large = Conv2D(self.conv_filters, kernel_size=d_large, **conv_params)(hiding_cat)
         hiding_final = Concatenate()([hiding_conv_small, hiding_conv_medium, hiding_conv_large])
 
-        self.hiding_model = Model(inputs=hiding_input, outputs=hiding_final)
 
         ################################
         # Reveal Network
@@ -161,8 +158,6 @@ class Steganography2D(NeuralCryptographyModel):
         reveal_conv_large = Conv2D(self.conv_filters, kernel_size=d_large, **conv_params)(reveal_cat)
         reveal_final = Concatenate()([reveal_conv_small, reveal_conv_medium, reveal_conv_large])
 
-        self.reveal_model = Model(inputs=reveal_input, outputs=reveal_final)
-
         ################################
         # Deep Steganography Network
         ################################
@@ -177,7 +172,7 @@ class Steganography2D(NeuralCryptographyModel):
         return [self.model]
 
     def __call__(self,
-                 epochs,
+                 epochs=50,
                  iterations_per_epoch=100,
                  batch_size=128):
 
@@ -200,4 +195,10 @@ class Steganography2D(NeuralCryptographyModel):
 
         self.history = history
         return history
+
+
+if __name__ == '__main__':
+
+    model = Steganography2D()
+    model()
 
