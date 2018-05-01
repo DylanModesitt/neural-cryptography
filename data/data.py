@@ -1,5 +1,8 @@
 import numpy as np
 from data.DES import des
+import os
+import sys
+from keras.preprocessing.image import img_to_array, load_img
 
 def gen_symmetric_encryption_data(n, msg_len=16, key_len=16):
     """
@@ -93,3 +96,17 @@ def gen_secure_otp_data(n, length):
 
     return (a*2-1,
             xor*2-1)
+
+def load_images():
+    """
+    load images into numpy array from /images directory
+
+    :return: a 4d array of numpy images: (shape, height, width, channels=3)
+    """
+    images = []
+    for file in os.listdir('./data/images/'):
+        if 'jpg' in file.lower() or 'png' in file.lower():
+            img = load_img(os.path.join(path, file))
+            image = img_to_array(img)
+            images.append(image)
+    return np.array(images)
