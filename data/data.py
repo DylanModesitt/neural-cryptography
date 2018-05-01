@@ -153,7 +153,7 @@ def load_image_covers_and_bit_secrets(how_many,
     secret_shape = covers.shape[:-1]
     secrets = np.random.randint(0, 2, size=(*secret_shape, bit_channels))
 
-    return covers, (secrets*2)-1
+    return covers, secrets
 
 
 
