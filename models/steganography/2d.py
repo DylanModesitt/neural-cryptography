@@ -55,8 +55,8 @@ class Steganography2D(NeuralCryptographyModel):
 
     """
 
-    cover_width: int = 64
-    cover_height: int = 64
+    cover_width: int = 32
+    cover_height: int = 32
 
     # secret width/height must match.
     # in evaluation, zeros can pad
@@ -103,7 +103,7 @@ class Steganography2D(NeuralCryptographyModel):
         prep_conv_small = Conv2D(self.conv_filters, kernel_size=d_small, **conv_params)(prep_cat)
         prep_conv_medium = Conv2D(self.conv_filters, kernel_size=d_medium, **conv_params)(prep_cat)
         prep_conv_large = Conv2D(self.conv_filters, kernel_size=d_large, **conv_params)(prep_cat)
-        prep_final = Concatenate()([prep_conv_small, prep_conv_medium, prep_conv_large])
+        prep_final = Concatenate(name='prepared')([prep_conv_small, prep_conv_medium, prep_conv_large])
 
         ################################
         # Hiding Network
@@ -129,14 +129,15 @@ class Steganography2D(NeuralCryptographyModel):
         hiding_conv_small = Conv2D(self.conv_filters, kernel_size=d_small, **conv_params)(hiding_cat)
         hiding_conv_medium = Conv2D(self.conv_filters, kernel_size=d_medium, **conv_params)(hiding_cat)
         hiding_conv_large = Conv2D(self.conv_filters, kernel_size=d_large, **conv_params)(hiding_cat)
-        hiding_final = Concatenate()([hiding_conv_small, hiding_conv_medium, hiding_conv_large])
+        hiding_final = Concatenate(name='hidden')([hiding_conv_small, hiding_conv_medium, hiding_conv_large])
 
+        hidden_secret = Conv2D(filters=3, kernel_size=1, **conv_params)(hiding_final)
 
         ################################
         # Reveal Network
         ################################
 
-        reveal_input = hiding_final
+        reveal_input = hidden_secret
         reveal_conv_small = Conv2D(self.conv_filters, kernel_size=d_small, **conv_params)(reveal_input)
         reveal_conv_small = Conv2D(self.conv_filters, kernel_size=d_small, **conv_params)(reveal_conv_small)
         reveal_conv_small = Conv2D(self.conv_filters, kernel_size=d_small, **conv_params)(reveal_conv_small)
@@ -156,13 +157,15 @@ class Steganography2D(NeuralCryptographyModel):
         reveal_conv_small = Conv2D(self.conv_filters, kernel_size=d_small, **conv_params)(reveal_cat)
         reveal_conv_medium = Conv2D(self.conv_filters, kernel_size=d_medium, **conv_params)(reveal_cat)
         reveal_conv_large = Conv2D(self.conv_filters, kernel_size=d_large, **conv_params)(reveal_cat)
-        reveal_final = Concatenate()([reveal_conv_small, reveal_conv_medium, reveal_conv_large])
+        reveal_final = Concatenate(name='revealed')([reveal_conv_small, reveal_conv_medium, reveal_conv_large])
+
+        reveal_cover = Conv2D(filters=3, kernel_size=1, **conv_params)(reveal_final)
 
         ################################
         # Deep Steganography Network
         ################################
 
-        self.model = Model(inputs=[cover_input, secret_input], outputs=[hiding_final, reveal_final])
+        self.model = Model(inputs=[cover_input, secret_input], outputs=[hidden_secret, reveal_cover])
         self.model.compile(
             optimizer=Adam(),
             loss=['mae', 'mae'],
