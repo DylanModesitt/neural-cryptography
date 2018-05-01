@@ -323,6 +323,5 @@ class Steganography2D(NeuralCryptographyModel):
 if __name__ == '__main__':
 
     model = Steganography2D()
-    model(steganography_epochs=0,
-          prefit_decryptionn_epochs=0)
+    model()
 
