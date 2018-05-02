@@ -8,7 +8,6 @@ from keras.layers import (
     Embedding,
     TimeDistributed,
     LSTM,
-    Bidirectional,
     Conv2D,
     Concatenate,
     AveragePooling2D,
@@ -56,16 +55,18 @@ class LsbDetection(Eve):
         censorship_input = Input(shape=(height, width, channels))
 
         flattend_input = Flatten()(censorship_input)
-        embeddinng = Embedding(input_dim=256, output_dim=self.embedding_dimmension)(flattend_input)
+        censor = Embedding(input_dim=256, output_dim=self.embedding_dimmension)(flattend_input)
 
-        lstm = Bidirectional(
-            LSTM(
-                128,
-            ),
-            merge_mode='concat'
-        )(embeddinng)
+        censor = TimeDistributed(
+            Dense(128, activation='tanh')
+        )(censor)
 
-        censor = Dense(1024, activation='tanh')(lstm)
+        censor = TimeDistributed(
+            Dense(1, activation='tanh')
+        )(censor)
+
+        censor = Dense(4096, activation='tanh')(Flatten()(censor))
+        censor = Dense(1024, activation='tanh')(censor)
         censor = Dense(1, activation='sigmoid')(censor)
 
         model = Model(inputs=censorship_input, outputs=censor)
@@ -91,7 +92,7 @@ class LsbDetection(Eve):
         for i in range(0, epochs):
 
             print('\n epoch', i)
-            covers, secrets = load_image_covers_and_ascii_bit_secrets(iterations_per_epoch*batch_size,
+            covers, secrets = load_image_covers_and_random_bit_secrets(iterations_per_epoch*batch_size,
                                                                       scale=1)
 
             hidden_secrets = LsbSteganography.encode(covers, secrets, scale=1)
