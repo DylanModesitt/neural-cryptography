@@ -73,6 +73,8 @@ class Steganography2D(NeuralCryptographyModel):
     conv_filters: int = 50
     convolution_dimmensions: Tuple[int] = (3, 4, 5)
 
+    image_scale: int = 1./255.
+
     beta = 1
     gamma = 1
 
@@ -140,11 +142,14 @@ class Steganography2D(NeuralCryptographyModel):
 
         hidden_secret = Conv2D(filters=self.cover_channels, kernel_size=1, name='hidden_secret')(hiding_final)
 
+        self.hiding_model = Model(inputs=[cover_input, secret_input], outputs=[hidden_secret])
+
         ################################
         # Reveal Network
         ################################
 
-        reveal_input = hidden_secret
+        reveal_input = Input(shape=(self.cover_height, self.cover_width, self.cover_channels))
+
         reveal_conv_small = Conv2D(self.conv_filters, kernel_size=d_small, **conv_params)(reveal_input)
         reveal_conv_small = Conv2D(self.conv_filters, kernel_size=d_small, **conv_params)(reveal_conv_small)
         reveal_conv_small = Conv2D(self.conv_filters, kernel_size=d_small, **conv_params)(reveal_conv_small)
@@ -166,8 +171,10 @@ class Steganography2D(NeuralCryptographyModel):
         reveal_conv_large = Conv2D(self.conv_filters, kernel_size=d_large, **conv_params)(reveal_cat)
         reveal_final = Concatenate(name='revealed')([reveal_conv_small, reveal_conv_medium, reveal_conv_large])
 
-        reveal_cover = Conv2D(filters=self.secret_channels, kernel_size=1, name='reconstructed_secret',
-                              padding='same', activation='sigmoid')(reveal_final)
+        reveal_secret = Conv2D(filters=self.secret_channels, kernel_size=1, name='reconstructed_secret',
+                               padding='same', activation='sigmoid')(reveal_final)
+
+        self.revealing_model = Model(inputs=[reveal_input], outputs=[reveal_secret])
 
         ################################
         # Censorship Network
@@ -211,39 +218,68 @@ class Steganography2D(NeuralCryptographyModel):
         # Deep Steganography Network
         ################################
 
-        self.hiding_model = Model(inputs=[cover_input, secret_input], outputs=[hidden_secret])
+        self.steganography_model_reveal = Model(inputs=[cover_input, secret_input],
+                                                outputs=[self.revealing_model([
+                                                    hidden_secret
+                                                ])])
 
-        self.reveal_model = Model(inputs=[cover_input, secret_input], outputs=[reveal_cover])
-        self.reveal_model.compile(
-            optimizer=Adam(),
-            loss=['binary_crossentropy'],
-        )
+        self.reveal_model.compile(optimizer=Adam(),loss=['binary_crossentropy'])
 
-        self.steganography_model = Model(inputs=[cover_input, secret_input], outputs=[hidden_secret, reveal_cover])
-        self.steganography_model.compile(
-            optimizer=Adam(),
-            loss=['mae', 'binary_crossentropy'],
-            loss_weights=[1, self.beta]
-        )
+        self.steganography_model = Model(inputs=[cover_input, secret_input],
+                                         outputs=[hidden_secret, self.revealing_model([hidden_secret])])
+
+        self.steganography_model.compile(optimizer=Adam(), loss=['mae', 'binary_crossentropy'],
+                                         loss_weights=[1, self.beta])
 
         for layer in self.censorship_model.layers:
             layer.trainable = False
 
         self.adversarial_model = Model(inputs=[cover_input, secret_input],
-                                       outputs=[hidden_secret, reveal_cover, self.censorship_model([hidden_secret])],
+                                       outputs=[hidden_secret, self.revealing_model([hidden_secret]),
+                                                self.censorship_model([hidden_secret])],
                                        name='seganography_and_adversary')
 
-        self.adversarial_model.compile(
-            optimizer=Adam(),
-            loss=['mae', 'binary_crossentropy', 'binary_crossentropy'],
-            loss_weights=[1, self.beta, self.gamma],
-        )
+        self.adversarial_model.compile(optimizer=Adam(), loss=['mae', 'binary_crossentropy', 'binary_crossentropy'],
+                                       loss_weights=[1, self.beta, self.gamma])
 
         if self.verbose > 0:
             self.adversarial_model.summary()
             # plot_model(self.adversarial_model, to_file=os.path.join(self.dir, 'model.png'))
 
         return [self.adversarial_model]
+
+    def hide(self, cover, secret):
+
+        if cover.shape[0] != self.cover_height or cover.shape[1] != self.cover_width \
+                or cover.shape[2] != self.cover_channels:
+
+            raise ValueError('expected secret to be of shape [ %s, %s, %s] ' %
+                             (self.cover_height, self.cover_width, self.secret_channels))
+
+        if secret.shape[0] != self.cover_height or secret.shape[1] != self.cover_width \
+                or secret.shape[2] != self.secret_channels:
+
+            raise ValueError('expected secret to be of shape [ %s, %s, %s] ' %
+                             (self.cover_height, self.cover_width, self.secret_channels))
+
+        secret = np.array(secret)
+        cover = np.array(cover)
+
+        hidden_secret = self.hiding_model.predict([cover, secret])[0]
+        return hidden_secret
+
+    def reveal(self, hidden_secret):
+
+        if hidden_secret.shape[0] != self.cover_height or hidden_secret.shape[1] != self.cover_width \
+                or hidden_secret.shape[2] != self.secret_channels:
+
+            raise ValueError('expected hidden to be of shape [ %s, %s, %s] ' %
+                             (self.cover_height, self.cover_width, self.secret_channels))
+
+        hidden_secret = np.array(hidden_secret)
+        secret = self.revealing_model.predict([hidden_secret])[0]
+
+        return secret
 
     def __call__(self,
                  prefit_decryptionn_epochs=2,
@@ -362,7 +398,10 @@ class Steganography2D(NeuralCryptographyModel):
 
 if __name__ == '__main__':
 
-    model = Steganography2D()
-    model()
+    model = Steganography2D(dir='./bin/steganography_2')
+    model(censorship_discriminator_epochs=0,
+          adversarial_epochs=0,
+          steganography_epochs=15)
+
     model.visualize()
 

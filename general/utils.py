@@ -82,6 +82,7 @@ def balance_real_and_fake_samples(real, fake, real_label=0):
 
     return real, y
 
+
 def replace_encryptions_with_random_entries(P, C, fraction=1/2, real_label=0):
 
     split = len(P) // (int(1/fraction))
@@ -97,3 +98,22 @@ def replace_encryptions_with_random_entries(P, C, fraction=1/2, real_label=0):
 
     return P, C, Y
 
+
+def bits_from_string(s):
+    """
+    given a string, return its binary represenation as a list
+    of 1s and 0s.
+
+    :param s: the string
+    :return: the binary described
+    """
+    return [0] + [int(e) for e in list(bin(int.from_bytes(s.encode(), 'big'))[2:])]
+
+
+def string_from_bits(bits):
+    """
+    the inverse of the above function
+    :param bits: the bits
+    :return: the string
+    """
+    return ''.join(chr(int(''.join(x), 2)) for x in zip(*[iter(''.join(map(str, bits)))]*8))
