@@ -42,7 +42,7 @@ class LsbDetection(Eve):
                            contain steganographic content
     """
 
-    self.embedding_dimmension = 100
+    embedding_dimmension: int = 100
 
     real_label: int = 1
     random_secrets: bool = False
