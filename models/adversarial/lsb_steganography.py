@@ -5,6 +5,7 @@ from keras.models import Model
 from keras.layers import (
     Input,
     Conv2D,
+    Concatenate,
     AveragePooling2D,
     MaxPooling2D,
     BatchNormalization,
@@ -45,10 +46,39 @@ class LsbDetection(Eve):
         height, width, channels = 32, 32, 3
 
         censorship_input = Input(shape=(height, width, channels))
-        flatten = Flatten()(censorship_input)
+
+        d_small, d_medium, d_large = (3,4,5)
+        conv_params = {
+            'padding': 'same',
+            'activation': 'relu'
+        }
+        reveal_conv_small = Conv2D(self.conv_filters, kernel_size=d_small, **conv_params)(censorship_input)
+        reveal_conv_small = Conv2D(self.conv_filters, kernel_size=d_small, **conv_params)(reveal_conv_small)
+        reveal_conv_small = Conv2D(self.conv_filters, kernel_size=d_small, **conv_params)(reveal_conv_small)
+        reveal_conv_small = Conv2D(self.conv_filters, kernel_size=d_small, **conv_params)(reveal_conv_small)
+
+        reveal_conv_medium = Conv2D(self.conv_filters, kernel_size=d_medium, **conv_params)(censorship_input)
+        reveal_conv_medium = Conv2D(self.conv_filters, kernel_size=d_medium, **conv_params)(reveal_conv_medium)
+        reveal_conv_medium = Conv2D(self.conv_filters, kernel_size=d_medium, **conv_params)(reveal_conv_medium)
+        reveal_conv_medium = Conv2D(self.conv_filters, kernel_size=d_medium, **conv_params)(reveal_conv_medium)
+
+        reveal_conv_large = Conv2D(self.conv_filters, kernel_size=d_large, **conv_params)(censorship_input)
+        reveal_conv_large = Conv2D(self.conv_filters, kernel_size=d_large, **conv_params)(reveal_conv_large)
+        reveal_conv_large = Conv2D(self.conv_filters, kernel_size=d_large, **conv_params)(reveal_conv_large)
+        reveal_conv_large = Conv2D(self.conv_filters, kernel_size=d_large, **conv_params)(reveal_conv_large)
+
+        reveal_cat = Concatenate()([reveal_conv_small, reveal_conv_medium, reveal_conv_large])
+        reveal_conv_small = Conv2D(self.conv_filters, kernel_size=d_small, **conv_params)(reveal_cat)
+        reveal_conv_medium = Conv2D(self.conv_filters, kernel_size=d_medium, **conv_params)(reveal_cat)
+        reveal_conv_large = Conv2D(self.conv_filters, kernel_size=d_large, **conv_params)(reveal_cat)
+        reveal_final = Concatenate(name='revealed')([reveal_conv_small, reveal_conv_medium, reveal_conv_large])
+
+        reveal_cover = Conv2D(filters=self.secret_channels, kernel_size=1, name='reconstructed_secret',
+                              padding='same', activation='sigmoid')(reveal_final)
+
+        flatten = Flatten()(reveal_cover)
         cen = Dense(1024, activation='relu')(flatten)
-        cen = Dense(512, activation='relu')(cen)
-        cen = Dense(256, activation='relu')(cen)
+        cen = Dense(1024, activation='relu')(cen)
         cen = Dense(1, activation='sigmoid')(cen)
 
         model = Model(inputs=censorship_input, outputs=cen)
