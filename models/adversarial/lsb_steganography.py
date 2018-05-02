@@ -61,7 +61,7 @@ class LsbDetection(Eve):
         )(censor)
 
         censor = Dense(1024, activation='tanh')(Flatten()(censor))
-        
+
         censor = Dense(1, activation='sigmoid')(censor)
 
         model = Model(inputs=censorship_input, outputs=censor)
@@ -87,7 +87,7 @@ class LsbDetection(Eve):
         for i in range(0, epochs):
 
             print('\n epoch', i)
-            covers, secrets = load_image_covers_and_ascii_bit_secrets(iterations_per_epoch*batch_size,
+            covers, secrets = load_image_covers_and_random_bit_secrets(iterations_per_epoch*batch_size,
                                                                       scale=1)
 
             hidden_secrets = LsbSteganography.encode(covers, secrets, scale=1)
