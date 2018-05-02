@@ -61,7 +61,7 @@ class LsbDetection(Eve):
         lstm = Bidirectional(
             LSTM(
                 128,
-            )(embeddinng),
+            ),
             merge_mode='concat'
         )(embeddinng)
 
