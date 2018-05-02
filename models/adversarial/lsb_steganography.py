@@ -4,52 +4,72 @@ from dataclasses import dataclass
 from keras.models import Model
 from keras.layers import (
     Input,
+    Conv2D,
+    MaxPooling2D,
     Flatten,
     Dense
 )
+from keras.optimizers import Adam
 
 # self
 from models.adversarial.eve import Eve, AdversarialGame
 from general.layers import ElementWise
-from data.data import gen_broken_otp_data
+from data.data import load_image_covers_and_ascii_bit_secrets, LsbSteganography
+
 from general.utils import join_list_valued_dictionaries, replace_encryptions_with_random_entries
 
 
 @dataclass
-class OTPSameKey(Eve):
+class LsbDetection(Eve):
     """
     This is an adversarial model to detect if an image
     contains LSB steganography where the secret is actual
     english words.
 
+    ********* Parameters
+    :parameter real_label: the label for an image that does not
+                           contain steganographic content
     """
 
-    message_length: int = 16
+    real_label: int = 1
 
     def initialize_model(self):
 
-        message_input = Input(shape=(self.message_length,), name='message_input')
-        possible_ciphertext_input = Input(shape=(self.message_length,), name='possible_ciphertext_input')
+        height, width, channels = 32, 32, 3
 
-        bitwise_function = Flatten()(
-            ElementWise([8, 1], activation='tanh')([
-                message_input,
-                possible_ciphertext_input
-            ])
-        )
+        censorship_input = Input(shape=(height, width, channels))
 
-        dense = Dense(
-            self.message_length,
-            activation='relu'
-        )(bitwise_function)
+        cen = Conv2D(32, (3, 3), activation='relu', padding='same')(censorship_input)
+        cen = Conv2D(32, (3, 3), activation='relu', padding='same')(cen)
+        cen = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(cen)
 
-        pred = Dense(
-            1,
-            activation='sigmoid'
-        )(dense)
+        # Block 2
+        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
+        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
+        cen = MaxPooling2D((2, 2), strides=(2, 2), name='block2_pool')(cen)
 
-        model = Model(inputs=[message_input, possible_ciphertext_input], outputs=pred)
-        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])
+        # Block 3
+        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
+        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
+        cen = MaxPooling2D((2, 2), strides=(2, 2), name='block3_pool')(cen)
+
+        # Block 4
+        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
+        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
+        cen = MaxPooling2D((2, 2), strides=(2, 2), name='block4_pool')(cen)
+
+        # Block 5
+        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
+        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
+        cen = MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(cen)
+
+        # Classification block
+        cen = Flatten(name='flatten')(cen)
+        cen = Dense(1024, activation='relu', name='fc1')(cen)
+        cen = Dense(1, activation='sigmoid', name='censor_prediction')(cen)
+
+        model = Model(inputs=censorship_input, outputs=cen)
+        model.compile(optimizer=Adam(), loss='binary_crossentropy')
 
         self.model = model
 
@@ -61,27 +81,33 @@ class OTPSameKey(Eve):
 
     def __call__(self,
                  epochs=50,
-                 iterations_per_epoch=300,
-                 batch_size=512):
-
-        key = np.random.randint(0, 2, size=(self.message_length,))
-        self.print("using key:", key)
+                 iterations_per_epoch=100,
+                 batch_size=32):
 
         histories = []
         for i in range(0, epochs):
 
             print('\n epoch', i)
-            P, C = gen_broken_otp_data(iterations_per_epoch*
-                                       batch_size,
-                                       self.message_length,
-                                       key)
+            covers, secrets = load_image_covers_and_ascii_bit_secrets(iterations_per_epoch*batch_size,
+                                                                      scale=1)
 
-            # replace to play game
-            P, C, Y = replace_encryptions_with_random_entries(P, C)
+            hidden_secrets = LsbSteganography.encode(covers, secrets)
+            y = np.zeros(len(covers)) if self.real_label == 1 else np.ones(len(covers))
+
+            # shuffle
+            p = np.random.permutation(len(covers))
+            covers, hidden_secrets, y = covers[p], hidden_secrets[p], y[p]
+
+            covers[:len(covers)//2] = hidden_secrets[:len(covers)//2]
+            y[:len(covers)//2] = self.real_label
+
+            # shuffle
+            p = np.random.permutation(len(covers))
+            covers, y = covers[p], y[p]
 
             history = self.model.fit(
-                x=[P, C],
-                y=Y,
+                x=[covers],
+                y=y,
                 verbose=self.verbose,
                 epochs=1,
                 batch_size=batch_size
@@ -101,7 +127,7 @@ class OTPSameKey(Eve):
 
 if __name__ == '__main__':
 
-    model = OTPSameKey()
+    model = LsbDetection()
     model(epochs=10)
     model.visualize()
 

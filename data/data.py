@@ -61,6 +61,7 @@ def gen_broken_otp_data(n, length, key):
     return (a*2-1,
             xor*2-1)
 
+
 def gen_reduced_des_ecb_data(amt, n, length, key, rounds):
     """
     generate amt plaintext/DES ECB ciphertext pairs n times
@@ -76,6 +77,7 @@ def gen_reduced_des_ecb_data(amt, n, length, key, rounds):
     c = np.vstack([d.encrypt(key, t, rounds=rounds)] for t in p)
     return (2 * p - 1, 2 * c - 1)
 
+
 def gen_des_ecb_data(n, length, key, rounds):
     """
     generate n plaintext/DES ECB ciphertext pairs
@@ -90,6 +92,7 @@ def gen_des_ecb_data(n, length, key, rounds):
     d = des()
     c = np.vstack([d.encrypt(key, t, rounds=rounds)] for t in p)
     return (2 * p - 1, 2 * c - 1)
+
 
 def gen_secure_otp_data(n, length):
     """
@@ -166,6 +169,7 @@ def load_image_covers_and_random_bit_secrets(how_many,
 def load_image_covers_and_ascii_bit_secrets(how_many,
                                             image_dir='./data/images',
                                             secret_modifier=DEFAULT_SECRET_SCALER,
+                                            scale=1./255.,
                                             bit_channels=1):
     """
     load image covers from the data directory and generate secrets
@@ -180,7 +184,7 @@ def load_image_covers_and_ascii_bit_secrets(how_many,
     :param bit_channels: the number of bit chanels
     :return:
     """
-    covers = load_images(image_dir, shuffle=True)
+    covers = load_images(image_dir, shuffle=True, scale=scale)
 
     if how_many > len(covers):
         covers = np.vstack([covers] * int(math.ceil(how_many / len(covers))))
@@ -189,7 +193,7 @@ def load_image_covers_and_ascii_bit_secrets(how_many,
     covers = covers[np.random.permutation(len(covers))]
 
     width, height = covers.shape[1], covers.shape[2]
-    num_characters_for_secret = ((width*height)/8)*bit_channels
+    num_characters_for_secret = int(((width*height)/8))*bit_channels
 
     with open('./data/words.txt') as f:
         words = f.read().splitlines()
@@ -199,13 +203,13 @@ def load_image_covers_and_ascii_bit_secrets(how_many,
 
         _str = ''  # string to encrypt
         while len(_str) < num_characters_for_secret:
-            _str += ' ' + random.choice(words)
+            _str += (' ' + random.choice(words)) if len(_str) > 0 else random.choice(words)
 
         _str = _str[:num_characters_for_secret]
-        bit_str = [int(e) for e in list(bin(int.from_bytes(_str.encode(), 'big'))[2:])]
+        bit_str = [0] + [int(e) for e in list(bin(int.from_bytes(_str.encode(), 'big'))[2:])]
 
         secret = np.array(bit_str)
-        secret.reshape((height, width, bit_channels))
+        secret = secret.reshape((height, width, bit_channels))
 
         secrets.append(
             secret
@@ -216,26 +220,67 @@ def load_image_covers_and_ascii_bit_secrets(how_many,
     return covers, secret_modifier(secrets)
 
 
-def lsb_steganography(how_many,
-                      image_dir='./data/images'):
-    """
-    draw random images and gernate ascii bit secrest, then
-    return images with those ascii secrets hidden with LSB
-    Steganographhy
+class LsbSteganography:
 
-    :param how_many: how many samples
-    :return: new covers of shape (how_many, height, width, 3)
-    """
+    @staticmethod
+    def encode(how_many,
+               image_dir='./data/images',
+               scale=1/255,
+               return_secrets=False):
+        """
+        draw random images and gernate ascii bit secrest, then
+        return images with those ascii secrets hidden with LSB
+        Steganographhy
 
-    covers, secrets = load_image_covers_and_ascii_bit_secrets(how_many,
-                                                              image_dir=image_dir,
-                                                              bit_channels=3)
+        :param how_many: how many samples
+        :return: new covers of shape (how_many, height, width, 3)
+        """
 
-    covers_mod2 = covers % 2
-    secret_changes = covers_mod2 ^ secrets
+        covers, secrets = load_image_covers_and_ascii_bit_secrets(how_many,
+                                                                  image_dir=image_dir,
+                                                                  scale=1,
+                                                                  bit_channels=3)
 
-    new_covers = covers + secret_changes
-    new_covers[new_covers == 256] = 254
+        return LsbSteganography.encode(covers,secrets,return_secrets=return_secrets)
 
-    return new_covers
+    @staticmethod
+    def encode(covers,
+               secrets,
+               return_secrets=False):
+
+        covers_mod2 = (covers % 2).astype(int)
+        secret_changes = covers_mod2 ^ secrets
+
+        np.set_printoptions(edgeitems=10)
+
+        new_covers = covers + secret_changes
+        new_covers[new_covers == 256] = 254
+
+        if return_secrets:
+            return new_covers, secrets
+
+        new_covers *= scale
+
+        return new_covers
+
+
+
+    @staticmethod
+    def decode(covers):
+        """
+        decode lsb steganography
+
+        :param covers: the covers (with secret)
+        :return: the secrets with shape covers.shape
+        """
+
+        return covers % 2
+
+
+    @staticmethod
+    def _verify(how_many):
+        covers, secrets = LsbSteganography.encode(how_many, return_secrets=True)
+        return np.all(secrets == LsbSteganography.decode(covers))
+
+
 
