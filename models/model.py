@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 # lib
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 
 # self
 from general.utils import generate_nonce
