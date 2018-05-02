@@ -216,3 +216,26 @@ def load_image_covers_and_ascii_bit_secrets(how_many,
     return covers, secret_modifier(secrets)
 
 
+def lsb_steganography(how_many,
+                      image_dir='./data/images'):
+    """
+    draw random images and gernate ascii bit secrest, then
+    return images with those ascii secrets hidden with LSB
+    Steganographhy
+
+    :param how_many: how many samples
+    :return: new covers of shape (how_many, height, width, 3)
+    """
+
+    covers, secrets = load_image_covers_and_ascii_bit_secrets(how_many,
+                                                              image_dir=image_dir,
+                                                              bit_channels=3)
+
+    covers_mod2 = covers % 2
+    secret_changes = covers_mod2 ^ secrets
+
+    new_covers = covers + secret_changes
+    new_covers[new_covers == 256] = 254
+
+    return new_covers
+
