@@ -92,7 +92,7 @@ class LsbDetection(Eve):
             p = np.random.permutation(len(covers))
             covers, y = covers[p], y[p]
 
-            covers = covers % 10
+            covers = covers % 2
 
             history = self.model.fit(
                 x=[covers],
