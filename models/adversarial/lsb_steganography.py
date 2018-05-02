@@ -71,7 +71,7 @@ class LsbDetection(Eve):
         # Classification block
         cen = Flatten(name='flatten')(cen)
         cen = Dense(1024, activation='relu', name='fc1')(cen)
-        cen = Dense(1024, activation='relu', name='fc1')(cen)
+        cen = Dense(1024, activation='relu', name='fc2')(cen)
         cen = Dense(1, activation='sigmoid', name='censor_prediction')(cen)
 
         model = Model(inputs=censorship_input, outputs=cen)
