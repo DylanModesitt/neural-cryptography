@@ -101,7 +101,7 @@ class LsbDetection(Eve):
             # shuffle
             p = np.random.permutation(len(covers))
             covers, hidden_secrets, y = covers[p], hidden_secrets[p], y[p]
-            covers[:len(covers)//2] = hidden_secrets[:len(covers)//2]
+            # covers[:len(covers)//2] = hidden_secrets[:len(covers)//2]
             y[:len(covers)//2] = 0 if self.real_label == 1 else 1
 
             # shuffle
