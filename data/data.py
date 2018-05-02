@@ -226,7 +226,7 @@ class LsbSteganography:
     @staticmethod
     def encode(how_many,
                image_dir='./data/images',
-               scale=1/255,
+               scale=1./255.,
                return_secrets=False):
         """
         draw random images and gernate ascii bit secrest, then
@@ -265,18 +265,16 @@ class LsbSteganography:
 
         return new_covers
 
-
     @staticmethod
-    def decode(covers):
+    def decode(covers,
+               scale=1./255.):
         """
         decode lsb steganography
 
         :param covers: the covers (with secret)
         :return: the secrets with shape covers.shape
         """
-
-        return covers % 2
-
+        return (covers * (1/scale)) % 2
 
     @staticmethod
     def _verify(how_many):
