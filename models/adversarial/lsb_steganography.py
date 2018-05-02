@@ -108,6 +108,8 @@ class LsbDetection(Eve):
             covers, secrets = load_image_covers_and_ascii_bit_secrets(iterations_per_epoch*batch_size,
                                                                       scale=1./255.)
 
+            print((covers*255)%2)
+
             # hidden_secrets = LsbSteganography.encode(covers, secrets)
 
             # print(hidden_secrets[0][0][0])
