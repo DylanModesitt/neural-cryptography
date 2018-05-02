@@ -113,6 +113,8 @@ class LsbDetection(Eve):
             print(hidden_secrets[0][0][0])
             print(secrets[0][0][0])
 
+            print((hidden_secrets % 2) == secrets)
+
             # y = np.zeros(len(covers)) if self.real_label == 0 else np.ones(len(covers))
             #
             # # shuffle
