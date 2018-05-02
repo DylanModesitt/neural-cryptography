@@ -77,7 +77,7 @@ class LsbDetection(Eve):
         reveal_final = Concatenate(name='revealed')([reveal_conv_small, reveal_conv_medium, reveal_conv_large])
 
         reveal_cover = Conv2D(filters=3, kernel_size=1, name='reconstructed_secret',
-                              padding='same')(reveal_final)
+                              padding='same', activation='sigmoid')(reveal_final)
 
         # flatten = Flatten()(reveal_cover)
         # cen = Dense(1024, activation='relu')(flatten)
@@ -85,7 +85,7 @@ class LsbDetection(Eve):
         # cen = Dense(1, activation='sigmoid')(cen)
 
         def accuracy(y_true, y_pred):
-            return K.mean(K.equal(K.round(y_true*255), K.round(y_pred*255)))
+            return K.mean(K.equal(K.round(y_true), K.round(y_pred)))
 
         model = Model(inputs=censorship_input, outputs=reveal_cover)
         model.compile(optimizer=Adam(), loss='mae', metrics=[accuracy])
@@ -138,9 +138,11 @@ class LsbDetection(Eve):
             #
             # covers = covers % 2
 
+            print(covers)
+
             history = self.model.fit(
                 x=[covers],
-                y=[((covers*255)%2) * 1./255.],
+                y=[((covers*255)%2).astype(int)],
                 verbose=self.verbose,
                 epochs=1,
                 batch_size=batch_size
