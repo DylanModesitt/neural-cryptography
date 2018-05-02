@@ -81,7 +81,7 @@ class LsbDetection(Eve):
         cen = Dense(1024, activation='relu')(cen)
         cen = Dense(1, activation='sigmoid')(cen)
 
-        model = Model(inputs=censorship_input, outputs=cen)
+        model = Model(inputs=censorship_input, outputs=reveal_cover)
         model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=['acc'])
 
         if self.verbose > 0:
@@ -108,25 +108,25 @@ class LsbDetection(Eve):
                                                                       scale=1)
 
             hidden_secrets = LsbSteganography.encode(covers, secrets, scale=1)
-            y = np.zeros(len(covers)) if self.real_label == 0 else np.ones(len(covers))
-
-            # shuffle
-            p = np.random.permutation(len(covers))
-            covers, hidden_secrets, y = covers[p], hidden_secrets[p], y[p]
-            # covers *= 1./255.
-
-            covers[:len(covers)//2] = hidden_secrets[:len(covers)//2]
-            y[:len(covers)//2] = 0 if self.real_label == 1 else 1
-
-            # shuffle
-            p = np.random.permutation(len(covers))
-            covers, y = covers[p], y[p]
-
-            covers = covers % 2
+            # y = np.zeros(len(covers)) if self.real_label == 0 else np.ones(len(covers))
+            #
+            # # shuffle
+            # p = np.random.permutation(len(covers))
+            # covers, hidden_secrets, y = covers[p], hidden_secrets[p], y[p]
+            # # covers *= 1./255.
+            #
+            # covers[:len(covers)//2] = hidden_secrets[:len(covers)//2]
+            # y[:len(covers)//2] = 0 if self.real_label == 1 else 1
+            #
+            # # shuffle
+            # p = np.random.permutation(len(covers))
+            # covers, y = covers[p], y[p]
+            #
+            # covers = covers % 2
 
             history = self.model.fit(
-                x=[covers],
-                y=y,
+                x=[hidden_secrets],
+                y=[secrets],
                 verbose=self.verbose,
                 epochs=1,
                 batch_size=batch_size
