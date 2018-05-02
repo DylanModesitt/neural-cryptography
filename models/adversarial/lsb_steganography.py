@@ -45,20 +45,12 @@ class LsbDetection(Eve):
         height, width, channels = 32, 32, 3
 
         censorship_input = Input(shape=(height, width, channels))
+        flatten = Flatten()(censorship_input)
+        cen = Dense(1024, activation='relu')(censorship_input)
+        cen = Dense(512, activation='relu')(cen)
+        cen = Dense(256, activation='relu')(cen)
+        cen = Dense(1, activation='sigmoid')(cen)
 
-        cen = Conv2D(32, (8, 8), activation='relu', padding='same')(censorship_input)
-        # cen = BatchNormalization()(cen)
-        cen = Conv2D(32, (8, 8), activation='relu', padding='same')(cen)
-        # cen = BatchNormalization()(cen)
-        cen = Conv2D(32, (5, 5), activation='relu', padding='same')(cen)
-        cen = BatchNormalization()(cen)
-        cen = Conv2D(32, (5, 5), activation='relu', padding='same')(cen)
-        # cen = BatchNormalization()(cen)
-        cen = Conv2D(32, (3, 3), activation='relu', padding='same')(cen)
-        cen = Flatten(name='flatten')(cen)
-        cen = Dense(1024, activation='relu', name='fc1')(cen)
-        cen = Dense(1024, activation='relu', name='fc2')(cen)
-        cen = Dense(1, activation='sigmoid', name='censor_prediction')(cen)
 
         model = Model(inputs=censorship_input, outputs=cen)
         model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=['acc'])
