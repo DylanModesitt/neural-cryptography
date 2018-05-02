@@ -223,7 +223,7 @@ class Steganography2D(NeuralCryptographyModel):
                                                     hidden_secret
                                                 ])])
 
-        self.steganography_model_reveal.compile(optimizer=Adam(),loss=['binary_crossentropy'])
+        self.steganography_model_reveal.compile(optimizer=Adam(), loss=['binary_crossentropy'], metrics=['acc'])
 
         self.steganography_model = Model(inputs=[cover_input, secret_input],
                                          outputs=[hidden_secret, self.revealing_model([hidden_secret])])
