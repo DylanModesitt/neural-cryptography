@@ -7,6 +7,8 @@ from keras.layers import (
     Input,
     Embedding,
     TimeDistributed,
+    LSTM,
+    Bidirectional,
     Conv2D,
     Concatenate,
     AveragePooling2D,
@@ -54,14 +56,16 @@ class LsbDetection(Eve):
         censorship_input = Input(shape=(height, width, channels))
 
         flattend_input = Flatten()(censorship_input)
-        censor = Embedding(input_dim=256, output_dim=self.embedding_dimmension)(flattend_input)
+        embeddinng = Embedding(input_dim=256, output_dim=self.embedding_dimmension)(flattend_input)
 
-        censor = TimeDistributed(
-            Dense(1, activation='tanh')
-        )(censor)
+        lstm = Bidirectional(
+            LSTM(
+                128,
+            )(embeddinng),
+            merge_mode='concat'
+        )(embeddinng)
 
-        censor = Dense(1024, activation='tanh')(Flatten()(censor))
-
+        censor = Dense(1024, activation='tanh')(lstm)
         censor = Dense(1, activation='sigmoid')(censor)
 
         model = Model(inputs=censorship_input, outputs=censor)
