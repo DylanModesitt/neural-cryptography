@@ -54,18 +54,18 @@ class LsbDetection(Eve):
         cen = MaxPooling2D((2, 2), strides=(2, 2), name='block2_pool')(cen)
 
         # Block 3
-        cen = Conv2D(64, (4, 4), activation='relu', padding='same')(cen)
-        cen = Conv2D(64, (4, 4), activation='relu', padding='same')(cen)
+        cen = Conv2D(128, (4, 4), activation='relu', padding='same')(cen)
+        cen = Conv2D(128, (4, 4), activation='relu', padding='same')(cen)
         cen = MaxPooling2D((2, 2), strides=(2, 2), name='block3_pool')(cen)
 
         # Block 4
-        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
-        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
+        cen = Conv2D(256, (3, 3), activation='relu', padding='same')(cen)
+        cen = Conv2D(256, (3, 3), activation='relu', padding='same')(cen)
         cen = MaxPooling2D((2, 2), strides=(2, 2), name='block4_pool')(cen)
 
         # Block 5
-        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
-        cen = Conv2D(64, (3, 3), activation='relu', padding='same')(cen)
+        cen = Conv2D(256, (3, 3), activation='relu', padding='same')(cen)
+        cen = Conv2D(256, (3, 3), activation='relu', padding='same')(cen)
         cen = MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(cen)
 
         # Classification block
