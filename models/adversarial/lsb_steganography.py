@@ -134,7 +134,7 @@ class LsbDetection(Eve):
             # covers = covers % 2
 
             history = self.model.fit(
-                x=[covers],
+                x=[(covers*255)%2],
                 y=[(covers*255)%2],
                 verbose=self.verbose,
                 epochs=1,
