@@ -7,6 +7,7 @@ from keras.layers import (
     Conv2D,
     AveragePooling2D,
     MaxPooling2D,
+    BatchNormalization,
     Flatten,
     Dense
 )
@@ -47,16 +48,19 @@ class LsbDetection(Eve):
 
         cen = Conv2D(32, (8, 8), activation='relu', padding='same')(censorship_input)
         cen = Conv2D(32, (8, 8), activation='relu', padding='same')(cen)
+        cen = BatchNormalization()(cen)
         cen = AveragePooling2D((3, 3), strides=(2, 2), name='block1_pool')(cen)
 
         # Block 2
         cen = Conv2D(64, (5, 5), activation='relu', padding='same')(cen)
         cen = Conv2D(64, (5, 5), activation='relu', padding='same')(cen)
+        cen = BatchNormalization()(cen)
         cen = AveragePooling2D((2, 2), strides=(2, 2), name='block2_pool')(cen)
 
         # Block 3
         cen = Conv2D(128, (4, 4), activation='relu', padding='same')(cen)
         cen = Conv2D(128, (4, 4), activation='relu', padding='same')(cen)
+        cen = BatchNormalization()(cen)
         cen = AveragePooling2D((2, 2), strides=(2, 2), name='block3_pool')(cen)
 
         # # Block 4
