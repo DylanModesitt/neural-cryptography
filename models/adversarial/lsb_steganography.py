@@ -5,6 +5,7 @@ from keras.models import Model
 from keras.layers import (
     Input,
     Conv2D,
+    AveragePooling2D,
     MaxPooling2D,
     Flatten,
     Dense
@@ -43,42 +44,36 @@ class LsbDetection(Eve):
         height, width, channels = 32, 32, 3
 
         censorship_input = Input(shape=(height, width, channels))
-        flatten = Flatten()(censorship_input)
 
-        cen = Dense(1024, activation='relu')(flatten)
-        cen = Dense(512, activation='relu')(cen)
-        cen = Dense(128, activation='relu')(cen)
-        cen = Dense(1, activation='sigmoid')(cen)
+        cen = Conv2D(32, (8, 8), activation='relu', padding='same')(censorship_input)
+        cen = Conv2D(32, (8, 8), activation='relu', padding='same')(cen)
+        cen = AveragePooling2D((3, 3), strides=(2, 2), name='block1_pool')(cen)
 
-        # cen = Conv2D(32, (4, 4), activation='relu', padding='same')(transform)
-        # cen = Conv2D(32, (4, 4), activation='relu', padding='same')(cen)
-        # cen = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(cen)
-        #
-        # # Block 2
-        # cen = Conv2D(64, (5, 5), activation='relu', padding='same')(cen)
-        # cen = Conv2D(64, (5, 5), activation='relu', padding='same')(cen)
-        # cen = MaxPooling2D((2, 2), strides=(2, 2), name='block2_pool')(cen)
-        #
-        # # Block 3
-        # cen = Conv2D(128, (4, 4), activation='relu', padding='same')(cen)
-        # cen = Conv2D(128, (4, 4), activation='relu', padding='same')(cen)
-        # cen = MaxPooling2D((2, 2), strides=(2, 2), name='block3_pool')(cen)
-        #
+        # Block 2
+        cen = Conv2D(64, (5, 5), activation='relu', padding='same')(cen)
+        cen = Conv2D(64, (5, 5), activation='relu', padding='same')(cen)
+        cen = AveragePooling2D((2, 2), strides=(2, 2), name='block2_pool')(cen)
+
+        # Block 3
+        cen = Conv2D(128, (4, 4), activation='relu', padding='same')(cen)
+        cen = Conv2D(128, (4, 4), activation='relu', padding='same')(cen)
+        cen = AveragePooling2D((2, 2), strides=(2, 2), name='block3_pool')(cen)
+
         # # Block 4
         # cen = Conv2D(256, (3, 3), activation='relu', padding='same')(cen)
         # cen = Conv2D(256, (3, 3), activation='relu', padding='same')(cen)
-        # cen = MaxPooling2D((2, 2), strides=(2, 2), name='block4_pool')(cen)
+        # cen = AveragePooling2D((2, 2), strides=(2, 2), name='block4_pool')(cen)
         #
         # # Block 5
         # cen = Conv2D(256, (3, 3), activation='relu', padding='same')(cen)
         # cen = Conv2D(256, (3, 3), activation='relu', padding='same')(cen)
-        # cen = MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(cen)
-        #
-        # # Classification block
-        # cen = Flatten(name='flatten')(cen)
-        # cen = Dense(1024, activation='relu', name='fc1')(cen)
-        # cen = Dense(1024, activation='relu', name='fc2')(cen)
-        # cen = Dense(1, activation='sigmoid', name='censor_prediction')(cen)
+        # cen = AveragePooling2D((2, 2), strides=(2, 2), name='block5_pool')(cen)
+
+        # Classification block
+        cen = Flatten(name='flatten')(cen)
+        cen = Dense(1024, activation='relu', name='fc1')(cen)
+        cen = Dense(1024, activation='relu', name='fc2')(cen)
+        cen = Dense(1, activation='sigmoid', name='censor_prediction')(cen)
 
         model = Model(inputs=censorship_input, outputs=cen)
         model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=['acc'])
