@@ -170,7 +170,7 @@ def load_image_covers_and_ascii_bit_secrets(how_many,
                                             image_dir='./data/images',
                                             secret_modifier=DEFAULT_SECRET_SCALER,
                                             scale=1./255.,
-                                            bit_channels=1):
+                                            bit_channels=3):
     """
     load image covers from the data directory and generate secrets
     that are drawn from the ascii encryption of a string drawn
