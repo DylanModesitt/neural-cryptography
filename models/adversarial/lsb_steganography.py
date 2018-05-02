@@ -83,7 +83,7 @@ class LsbDetection(Eve):
         histories = []
         for i in range(0, epochs):
 
-            print('\n epoch', i)
+            print('\n epoch', i+1)
             covers, secrets = load_image_covers_and_ascii_bit_secrets(iterations_per_epoch*batch_size,
                                                                       scale=1)
 
