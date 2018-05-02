@@ -4,19 +4,7 @@ from typing import Sequence, Tuple
 
 # lib
 import numpy as np
-from dataclasses import dataclass
-from keras.layers import (
-    Input,
-    Conv2D,
-    Concatenate,
-    BatchNormalization,
-    MaxPooling2D,
-    Flatten,
-    Dense
-)
-from keras.models import Model
-from keras.optimizers import Adam
-from keras.utils import plot_model
+from keras.preprocessing.image import array_to_img
 
 # self
 from models.steganography.d_2 import Steganography2D
@@ -39,10 +27,15 @@ class SteganographyImageCoverWrapper:
         self.images = load_images(path=image_dir,
                                   scale=steg_2d_model.image_scale)
 
-    def hide_in_random_image_cover(self, secret):
+    def hide_in_random_image_cover(self, secret, return_cover=True):
 
-        cover = np.random.choice(self.images)
+        idx = np.random.randint(0, len(self.images))
+        cover = self.images[idx]
         hidden_secret = self.model.hide(cover, secret)
+
+        if return_cover:
+            return hidden_secret, cover
+
         return hidden_secret
 
     def hide_str_in_random_image_cover(self, s):
@@ -51,10 +44,9 @@ class SteganographyImageCoverWrapper:
         desired_len = self.model.cover_height * self.model.cover_width * self.model.secret_channels
 
         if len(bits) < desired_len:
-            bits + [0]*(len(bits) - desired_len)
+            bits += [0]*(desired_len - len(bits))
 
         bits = bits[:desired_len]
-
         bits = np.array(bits)
         bits = bits.reshape((self.model.cover_height, self.model.cover_width, self.model.secret_channels))
 
@@ -63,7 +55,8 @@ class SteganographyImageCoverWrapper:
     def decode_str_in_cover(self, cover):
 
         secret = np.round(self.model.reveal(cover))
-        return string_from_bits(list(secret.flatten()))
+        print(list(secret.flatten().astype(int)))
+        return string_from_bits(list(secret.flatten().astype(int)))
 
 
 if __name__ == '__main__':
@@ -73,8 +66,13 @@ if __name__ == '__main__':
 
     helper = SteganographyImageCoverWrapper(model)
 
-    hidden_secret = helper.hide_str_in_random_image_cover('hello')
+    hidden_secret, cover = helper.hide_str_in_random_image_cover('Cryptography is the study of "mathematical" systems.')
     print(helper.decode_str_in_cover(hidden_secret))
+
+    hidden_secret, cover = array_to_img(hidden_secret), array_to_img(cover)
+    cover.save('./cover.png', 'PNG')
+    hidden_secret.save('./hidden_secret.png', 'PNG')
+
 
 
 

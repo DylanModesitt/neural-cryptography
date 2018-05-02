@@ -75,7 +75,7 @@ class Steganography2D(NeuralCryptographyModel):
 
     image_scale: int = 1./255.
 
-    beta = 1
+    beta = 0.75
     gamma = 1
 
     def initialize_model(self):
@@ -262,21 +262,21 @@ class Steganography2D(NeuralCryptographyModel):
             raise ValueError('expected secret to be of shape [ %s, %s, %s] ' %
                              (self.cover_height, self.cover_width, self.secret_channels))
 
-        secret = np.array(secret)
-        cover = np.array(cover)
+        secret = np.array([secret])
+        cover = np.array([cover * self.image_scale])
 
         hidden_secret = self.hiding_model.predict([cover, secret])[0]
-        return hidden_secret
+        return hidden_secret * (1./self.image_scale)
 
     def reveal(self, hidden_secret):
 
         if hidden_secret.shape[0] != self.cover_height or hidden_secret.shape[1] != self.cover_width \
-                or hidden_secret.shape[2] != self.secret_channels:
+                or hidden_secret.shape[2] != self.cover_channels:
 
             raise ValueError('expected hidden to be of shape [ %s, %s, %s] ' %
                              (self.cover_height, self.cover_width, self.secret_channels))
 
-        hidden_secret = np.array(hidden_secret)
+        hidden_secret = np.array([hidden_secret * self.image_scale])
         secret = self.revealing_model.predict([hidden_secret])[0]
 
         return secret
@@ -401,7 +401,7 @@ if __name__ == '__main__':
     model = Steganography2D(dir='./bin/steganography_2')
     model(censorship_discriminator_epochs=0,
           adversarial_epochs=0,
-          steganography_epochs=15)
+          steganography_epochs=50)
 
     model.visualize()
 
