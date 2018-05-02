@@ -47,11 +47,12 @@ class LsbDetection(Eve):
 
         censorship_input = Input(shape=(height, width, channels))
 
-        d_small, d_medium, d_large = (3,4,5)
+        d_small, d_medium, d_large = (3, 4, 5)
         conv_params = {
             'padding': 'same',
             'activation': 'relu'
         }
+
         reveal_conv_small = Conv2D(32, kernel_size=d_small, **conv_params)(censorship_input)
         reveal_conv_small = Conv2D(32, kernel_size=d_small, **conv_params)(reveal_conv_small)
         reveal_conv_small = Conv2D(32, kernel_size=d_small, **conv_params)(reveal_conv_small)
@@ -76,10 +77,10 @@ class LsbDetection(Eve):
         reveal_cover = Conv2D(filters=3, kernel_size=1, name='reconstructed_secret',
                               padding='same', activation='sigmoid')(reveal_final)
 
-        flatten = Flatten()(reveal_cover)
-        cen = Dense(1024, activation='relu')(flatten)
-        cen = Dense(1024, activation='relu')(cen)
-        cen = Dense(1, activation='sigmoid')(cen)
+        # flatten = Flatten()(reveal_cover)
+        # cen = Dense(1024, activation='relu')(flatten)
+        # cen = Dense(1024, activation='relu')(cen)
+        # cen = Dense(1, activation='sigmoid')(cen)
 
         model = Model(inputs=censorship_input, outputs=reveal_cover)
         model.compile(optimizer=Adam(), loss='mae', metrics=['acc'])
@@ -107,7 +108,7 @@ class LsbDetection(Eve):
             covers, secrets = load_image_covers_and_ascii_bit_secrets(iterations_per_epoch*batch_size,
                                                                       scale=1)
 
-            hidden_secrets = LsbSteganography.encode(covers, secrets, scale=1)
+            hidden_secrets = LsbSteganography.encode(covers, secrets)
             # y = np.zeros(len(covers)) if self.real_label == 0 else np.ones(len(covers))
             #
             # # shuffle
