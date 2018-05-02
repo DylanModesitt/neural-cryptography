@@ -2,6 +2,9 @@
 import sys
 import os
 import math
+import random
+import binascii
+
 
 # lib
 import numpy as np
@@ -130,10 +133,12 @@ def load_images(path='./data/images/',
 
 
 DEFAULT_SECRET_SCALER = lambda x: x
-def load_image_covers_and_bit_secrets(how_many,
-                                      image_dir='./data/images',
-                                      secret_modifier=DEFAULT_SECRET_SCALER,
-                                      bit_channels=1):
+
+
+def load_image_covers_and_random_bit_secrets(how_many,
+                                             image_dir='./data/images',
+                                             secret_modifier=DEFAULT_SECRET_SCALER,
+                                             bit_channels=1):
     """
     load image covers and random bit secrets. The images
     will be a random section of the images in data/images
@@ -158,7 +163,56 @@ def load_image_covers_and_bit_secrets(how_many,
     return covers, secret_modifier(secrets)
 
 
+def load_image_covers_and_ascii_bit_secrets(how_many,
+                                            image_dir='./data/images',
+                                            secret_modifier=DEFAULT_SECRET_SCALER,
+                                            bit_channels=1):
+    """
+    load image covers from the data directory and generate secrets
+    that are drawn from the ascii encryption of a string drawn
+    from english words. The bits are returned 1 channel deep by
+    default.
 
+    :param how_many: how many covers/secrets
+    :param image_dir: the image directory
+    :param secret_modifier: the function to modify the secret
+                            (scale or alter it)
+    :param bit_channels: the number of bit chanels
+    :return:
+    """
+    covers = load_images(image_dir, shuffle=True)
 
+    if how_many > len(covers):
+        covers = np.vstack([covers] * int(math.ceil(how_many / len(covers))))
+
+    covers = covers[:how_many]
+    covers = covers[np.random.permutation(len(covers))]
+
+    width, height = covers.shape[1], covers.shape[2]
+    num_characters_for_secret = ((width*height)/8)*bit_channels
+
+    with open('./data/words.txt') as f:
+        words = f.read().splitlines()
+
+    secrets = []
+    for i in range(how_many):
+
+        _str = ''  # string to encrypt
+        while len(_str) < num_characters_for_secret:
+            _str += ' ' + random.choice(words)
+
+        _str = _str[:num_characters_for_secret]
+        bit_str = [int(e) for e in list(bin(int.from_bytes(_str.encode(), 'big'))[2:])]
+
+        secret = np.array(bit_str)
+        secret.reshape((height, width, bit_channels))
+
+        secrets.append(
+            secret
+        )
+
+    secrets = np.array(secrets)
+
+    return covers, secret_modifier(secrets)
 
 
