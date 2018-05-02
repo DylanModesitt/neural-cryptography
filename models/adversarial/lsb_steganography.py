@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from keras.models import Model
 from keras.layers import (
     Input,
+    Embedding,
+    TimeDistributed,
     Conv2D,
     Concatenate,
     AveragePooling2D,
@@ -40,6 +42,8 @@ class LsbDetection(Eve):
                            contain steganographic content
     """
 
+    self.embedding_dimmension = 100
+
     real_label: int = 1
     random_secrets: bool = False
 
@@ -49,46 +53,18 @@ class LsbDetection(Eve):
 
         censorship_input = Input(shape=(height, width, channels))
 
-        d_small, d_medium, d_large = (3, 4, 5)
-        conv_params = {
-            'padding': 'same',
-            'activation': 'relu'
-        }
+        flattend_input = Flatten()(censorship_input)
+        censor = Embedding(input_dim=256, output_dim=self.embedding_dimmension)(flattend_input)
 
-        reveal_conv_small = Conv2D(32, kernel_size=d_small, **conv_params)(censorship_input)
-        reveal_conv_small = Conv2D(32, kernel_size=d_small, **conv_params)(reveal_conv_small)
-        reveal_conv_small = Conv2D(32, kernel_size=d_small, **conv_params)(reveal_conv_small)
-        reveal_conv_small = Conv2D(32, kernel_size=d_small, **conv_params)(reveal_conv_small)
+        censor = TimeDistributed(
+            Dense(128, activation='tanh')
+        )(censor)
 
-        reveal_conv_medium = Conv2D(32, kernel_size=d_medium, **conv_params)(censorship_input)
-        reveal_conv_medium = Conv2D(32, kernel_size=d_medium, **conv_params)(reveal_conv_medium)
-        reveal_conv_medium = Conv2D(32, kernel_size=d_medium, **conv_params)(reveal_conv_medium)
-        reveal_conv_medium = Conv2D(32, kernel_size=d_medium, **conv_params)(reveal_conv_medium)
+        censor = Dense(1024, activation='tanh')(censor)
+        censor = Dense(1, activation='sigmoid')(censor)
 
-        reveal_conv_large = Conv2D(32, kernel_size=d_large, **conv_params)(censorship_input)
-        reveal_conv_large = Conv2D(32, kernel_size=d_large, **conv_params)(reveal_conv_large)
-        reveal_conv_large = Conv2D(32, kernel_size=d_large, **conv_params)(reveal_conv_large)
-        reveal_conv_large = Conv2D(32, kernel_size=d_large, **conv_params)(reveal_conv_large)
-
-        reveal_cat = Concatenate()([reveal_conv_small, reveal_conv_medium, reveal_conv_large])
-        reveal_conv_small = Conv2D(32, kernel_size=d_small, **conv_params)(reveal_cat)
-        reveal_conv_medium = Conv2D(32, kernel_size=d_medium, **conv_params)(reveal_cat)
-        reveal_conv_large = Conv2D(32, kernel_size=d_large, **conv_params)(reveal_cat)
-        reveal_final = Concatenate(name='revealed')([reveal_conv_small, reveal_conv_medium, reveal_conv_large])
-
-        reveal_cover = Conv2D(filters=3, kernel_size=1, name='reconstructed_secret',
-                              padding='same', activation='sigmoid')(reveal_final)
-
-        # flatten = Flatten()(reveal_cover)
-        # cen = Dense(1024, activation='relu')(flatten)
-        # cen = Dense(1024, activation='relu')(cen)
-        # cen = Dense(1, activation='sigmoid')(cen)
-
-        def accuracy(y_true, y_pred):
-            return K.mean(K.equal(K.round(y_true), K.round(y_pred)))
-
-        model = Model(inputs=censorship_input, outputs=reveal_cover)
-        model.compile(optimizer=Adam(), loss='mae', metrics=[accuracy])
+        model = Model(inputs=censorship_input, outputs=censor)
+        model.compile(optimizer=Adam(), loss='mae', metrics=['acc'])
 
         if self.verbose > 0:
             model.summary()
@@ -111,38 +87,24 @@ class LsbDetection(Eve):
 
             print('\n epoch', i)
             covers, secrets = load_image_covers_and_ascii_bit_secrets(iterations_per_epoch*batch_size,
-                                                                      scale=1./255.)
+                                                                      scale=1)
 
-            print(((covers*255)%2).astype(int))
+            hidden_secrets = LsbSteganography.encode(covers, secrets, scale=1)
+            y = np.zeros(len(covers)) if self.real_label == 0 else np.ones(len(covers))
 
-            # hidden_secrets = LsbSteganography.encode(covers, secrets)
+            # shuffle
+            p = np.random.permutation(len(covers))
+            covers, hidden_secrets, y = covers[p], hidden_secrets[p], y[p]
+            covers[:len(covers)//2] = hidden_secrets[:len(covers)//2]
+            y[:len(covers)//2] = 0 if self.real_label == 1 else 1
 
-            # print(hidden_secrets[0][0][0])
-            # print(secrets[0][0][0])
-            #
-            # print((hidden_secrets*255 % 2) == secrets)
-
-            # y = np.zeros(len(covers)) if self.real_label == 0 else np.ones(len(covers))
-            #
-            # # shuffle
-            # p = np.random.permutation(len(covers))
-            # covers, hidden_secrets, y = covers[p], hidden_secrets[p], y[p]
-            # # covers *= 1./255.
-            #
-            # covers[:len(covers)//2] = hidden_secrets[:len(covers)//2]
-            # y[:len(covers)//2] = 0 if self.real_label == 1 else 1
-            #
-            # # shuffle
-            # p = np.random.permutation(len(covers))
-            # covers, y = covers[p], y[p]
-            #
-            # covers = covers % 2
-
-            print(covers)
+            # shuffle
+            p = np.random.permutation(len(covers))
+            covers, y = covers[p], y[p]
 
             history = self.model.fit(
                 x=[covers],
-                y=[((covers*255)%2).astype(int)],
+                y=[y],
                 verbose=self.verbose,
                 epochs=1,
                 batch_size=batch_size

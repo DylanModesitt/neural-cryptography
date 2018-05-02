@@ -22,7 +22,7 @@ from keras.utils import plot_model
 from models.model import NeuralCryptographyModel
 from models.steganography.steganography import SteganographyData
 from general.utils import join_list_valued_dictionaries, balance_real_and_fake_samples
-from data.data import load_image_covers_and_bit_secrets
+from data.data import load_image_covers_and_random_bit_secrets
 
 
 @dataclass
@@ -262,7 +262,7 @@ class Steganography2D(NeuralCryptographyModel):
 
             self.print('epoch [ %s / %s]' % (i+1, prefit_decryptionn_epochs))
             self.print('>> generating data')
-            covers, secrets = load_image_covers_and_bit_secrets(iterations_per_epoch*batch_size)
+            covers, secrets = load_image_covers_and_random_bit_secrets(iterations_per_epoch*batch_size)
 
             print('>> fitting')
             reveal_history = self.reveal_model.fit(
@@ -279,7 +279,7 @@ class Steganography2D(NeuralCryptographyModel):
 
             self.print('epoch [ %s / %s]' % (i+1, steganography_epochs))
             self.print('>> generating data')
-            covers, secrets = load_image_covers_and_bit_secrets(iterations_per_epoch*batch_size)
+            covers, secrets = load_image_covers_and_random_bit_secrets(iterations_per_epoch*batch_size)
 
             self.print('>> fitting')
             steganography_history = self.steganography_model.fit(
@@ -297,7 +297,7 @@ class Steganography2D(NeuralCryptographyModel):
             self.print('epoch [ %s / %s]' % (i+1, steganography_epochs))
             self.print('>> generating data')
 
-            covers, secrets = load_image_covers_and_bit_secrets(iterations_per_epoch*batch_size)
+            covers, secrets = load_image_covers_and_random_bit_secrets(iterations_per_epoch*batch_size)
             hidden_secrets = self.hiding_model.predict([covers, secrets])
             samples, labels = balance_real_and_fake_samples(covers, hidden_secrets)
 
@@ -317,7 +317,7 @@ class Steganography2D(NeuralCryptographyModel):
             self.print('>> generating data')
 
             # gen covers/secrets
-            covers, secrets = load_image_covers_and_bit_secrets(iterations_per_epoch*batch_size)
+            covers, secrets = load_image_covers_and_random_bit_secrets(iterations_per_epoch*batch_size)
             # gen steg(cover, segret)
             hidden_secrets = self.hiding_model.predict([covers, secrets])
             samples, labels = balance_real_and_fake_samples(covers, hidden_secrets)
@@ -333,7 +333,7 @@ class Steganography2D(NeuralCryptographyModel):
             c_history.append(censorship_history)
 
             self.print('>> generating data')
-            covers, secrets = load_image_covers_and_bit_secrets(iterations_per_epoch*batch_size)
+            covers, secrets = load_image_covers_and_random_bit_secrets(iterations_per_epoch*batch_size)
 
             self.print('>> fitting')
             adverarial_history = self.adversarial_model.fit(
