@@ -77,7 +77,7 @@ class LsbDetection(Eve):
         reveal_final = Concatenate(name='revealed')([reveal_conv_small, reveal_conv_medium, reveal_conv_large])
 
         reveal_cover = Conv2D(filters=3, kernel_size=1, name='reconstructed_secret',
-                              padding='same', activation='sigmoid')(reveal_final)
+                              padding='same')(reveal_final)
 
         # flatten = Flatten()(reveal_cover)
         # cen = Dense(1024, activation='relu')(flatten)
