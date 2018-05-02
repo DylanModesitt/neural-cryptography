@@ -1,4 +1,5 @@
 # lib
+import keras.backend as K
 import numpy as np
 from dataclasses import dataclass
 from keras.models import Model
@@ -13,6 +14,7 @@ from keras.layers import (
     Dense
 )
 from keras.optimizers import Adam
+from keras.metrics import binary_accuracy
 
 # self
 from models.adversarial.eve import Eve, AdversarialGame
@@ -82,8 +84,11 @@ class LsbDetection(Eve):
         # cen = Dense(1024, activation='relu')(cen)
         # cen = Dense(1, activation='sigmoid')(cen)
 
+        def accuracy(y_true, y_pred):
+            return K.mean(K.equal(y_true, K.round(y_pred)))
+
         model = Model(inputs=censorship_input, outputs=reveal_cover)
-        model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=['acc'])
+        model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=[accuracy])
 
         if self.verbose > 0:
             model.summary()
