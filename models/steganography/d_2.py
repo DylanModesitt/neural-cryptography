@@ -301,7 +301,7 @@ class Steganography2D(NeuralCryptographyModel):
             covers, secrets = load_image_covers_and_random_bit_secrets(iterations_per_epoch*batch_size)
 
             print('>> fitting')
-            reveal_history = self.reveal_model.fit(
+            reveal_history = self.steganography_model_reveal.fit(
                 x=[covers, secrets],
                 y=[secrets],
                 batch_size=batch_size,
