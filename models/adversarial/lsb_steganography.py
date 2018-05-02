@@ -74,7 +74,7 @@ class LsbDetection(Eve):
         cen = Dense(1, activation='sigmoid', name='censor_prediction')(cen)
 
         model = Model(inputs=censorship_input, outputs=cen)
-        model.compile(optimizer=Adam(), loss='binary_crossentropy')
+        model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=['acc'])
 
         self.model = model
 
