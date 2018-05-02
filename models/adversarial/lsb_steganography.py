@@ -77,6 +77,9 @@ class LsbDetection(Eve):
         model = Model(inputs=censorship_input, outputs=cen)
         model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=['acc'])
 
+        if self.verbose > 0:
+            model.summary()
+
         self.model = model
 
         return [model]
@@ -98,7 +101,7 @@ class LsbDetection(Eve):
                                                                       scale=1)
 
             hidden_secrets = LsbSteganography.encode(covers, secrets)
-            y = np.zeros(len(covers)) if self.real_label == 1 else np.ones(len(covers))
+            y = np.zeros(len(covers)) if self.real_label == 0 else np.ones(len(covers))
 
             # shuffle
             p = np.random.permutation(len(covers))
@@ -106,7 +109,7 @@ class LsbDetection(Eve):
             covers *= 1./255.
 
             covers[:len(covers)//2] = hidden_secrets[:len(covers)//2]
-            y[:len(covers)//2] = self.real_label
+            y[:len(covers)//2] = 0 if self.real_label == 1 else 1
 
             # shuffle
             p = np.random.permutation(len(covers))
