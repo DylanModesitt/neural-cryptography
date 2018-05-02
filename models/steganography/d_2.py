@@ -353,6 +353,8 @@ class Steganography2D(NeuralCryptographyModel):
             'steganography network + censorship network (GAN)': join_list_valued_dictionaries(*gan_history)
         })
 
+        self.save()
+
         self.history = history
 
         return history
