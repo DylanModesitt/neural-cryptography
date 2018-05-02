@@ -85,7 +85,7 @@ class LsbDetection(Eve):
         # cen = Dense(1, activation='sigmoid')(cen)
 
         def accuracy(y_true, y_pred):
-            return K.mean(K.equal(y_true, K.round(y_pred)))
+            return K.mean(K.equal(K.round(y_true*255), K.round(y_pred*255)))
 
         model = Model(inputs=censorship_input, outputs=reveal_cover)
         model.compile(optimizer=Adam(), loss='mae', metrics=[accuracy])
