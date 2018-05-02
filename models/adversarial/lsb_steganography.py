@@ -7,21 +7,13 @@ from keras.layers import (
     Input,
     Embedding,
     TimeDistributed,
-    LSTM,
-    Conv2D,
-    Concatenate,
-    AveragePooling2D,
-    MaxPooling2D,
-    BatchNormalization,
     Flatten,
     Dense
 )
 from keras.optimizers import Adam
-from keras.metrics import binary_accuracy
 
 # self
 from models.adversarial.eve import Eve, AdversarialGame
-from general.layers import ElementWise
 from data.data import (
     load_image_covers_and_ascii_bit_secrets,
     load_image_covers_and_random_bit_secrets,
@@ -92,7 +84,7 @@ class LsbDetection(Eve):
         for i in range(0, epochs):
 
             print('\n epoch', i)
-            covers, secrets = load_image_covers_and_random_bit_secrets(iterations_per_epoch*batch_size,
+            covers, secrets = load_image_covers_and_ascii_bit_secrets(iterations_per_epoch*batch_size,
                                                                       scale=1)
 
             hidden_secrets = LsbSteganography.encode(covers, secrets, scale=1)
