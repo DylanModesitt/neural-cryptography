@@ -398,7 +398,7 @@ class Steganography2D(NeuralCryptographyModel):
 
 if __name__ == '__main__':
 
-    model = Steganography2D(dir='./bin/steganography_2')
+    model = Steganography2D()
     model(censorship_discriminator_epochs=0,
           adversarial_epochs=0,
           steganography_epochs=50)
