@@ -47,33 +47,14 @@ class LsbDetection(Eve):
         censorship_input = Input(shape=(height, width, channels))
 
         cen = Conv2D(32, (8, 8), activation='relu', padding='same')(censorship_input)
+        cen = BatchNormalization()(cen)
         cen = Conv2D(32, (8, 8), activation='relu', padding='same')(cen)
         cen = BatchNormalization()(cen)
-        cen = AveragePooling2D((3, 3), strides=(2, 2), name='block1_pool')(cen)
-
-        # Block 2
-        cen = Conv2D(64, (5, 5), activation='relu', padding='same')(cen)
-        cen = Conv2D(64, (5, 5), activation='relu', padding='same')(cen)
+        cen = Conv2D(32, (5, 5), activation='relu', padding='same')(cen)
         cen = BatchNormalization()(cen)
-        cen = AveragePooling2D((2, 2), strides=(2, 2), name='block2_pool')(cen)
-
-        # Block 3
-        cen = Conv2D(128, (4, 4), activation='relu', padding='same')(cen)
-        cen = Conv2D(128, (4, 4), activation='relu', padding='same')(cen)
+        cen = Conv2D(32, (5, 5), activation='relu', padding='same')(cen)
         cen = BatchNormalization()(cen)
-        cen = AveragePooling2D((2, 2), strides=(2, 2), name='block3_pool')(cen)
-
-        # # Block 4
-        # cen = Conv2D(256, (3, 3), activation='relu', padding='same')(cen)
-        # cen = Conv2D(256, (3, 3), activation='relu', padding='same')(cen)
-        # cen = AveragePooling2D((2, 2), strides=(2, 2), name='block4_pool')(cen)
-        #
-        # # Block 5
-        # cen = Conv2D(256, (3, 3), activation='relu', padding='same')(cen)
-        # cen = Conv2D(256, (3, 3), activation='relu', padding='same')(cen)
-        # cen = AveragePooling2D((2, 2), strides=(2, 2), name='block5_pool')(cen)
-
-        # Classification block
+        cen = Conv2D(32, (3, 3), activation='relu', padding='same')(cen)
         cen = Flatten(name='flatten')(cen)
         cen = Dense(1024, activation='relu', name='fc1')(cen)
         cen = Dense(1024, activation='relu', name='fc2')(cen)
