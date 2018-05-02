@@ -241,11 +241,12 @@ class LsbSteganography:
                                                                   scale=1,
                                                                   bit_channels=3)
 
-        return LsbSteganography.encode(covers,secrets,return_secrets=return_secrets)
+        return LsbSteganography.encode(covers, secrets, return_secrets=return_secrets, scale=scale)
 
     @staticmethod
     def encode(covers,
                secrets,
+               scale=1./255.,
                return_secrets=False):
 
         covers_mod2 = (covers % 2).astype(int)
