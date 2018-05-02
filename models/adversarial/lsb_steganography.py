@@ -57,10 +57,11 @@ class LsbDetection(Eve):
         censor = Embedding(input_dim=256, output_dim=self.embedding_dimmension)(flattend_input)
 
         censor = TimeDistributed(
-            Dense(128, activation='tanh')
+            Dense(1, activation='tanh')
         )(censor)
 
-        censor = Dense(1024, activation='tanh')(censor)
+        censor = Dense(1024, activation='tanh')(Flatten()(censor))
+        
         censor = Dense(1, activation='sigmoid')(censor)
 
         model = Model(inputs=censorship_input, outputs=censor)
