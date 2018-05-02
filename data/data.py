@@ -140,6 +140,7 @@ DEFAULT_SECRET_SCALER = lambda x: x
 
 def load_image_covers_and_random_bit_secrets(how_many,
                                              image_dir='./data/images',
+                                             scale=1./255.,
                                              secret_modifier=DEFAULT_SECRET_SCALER,
                                              bit_channels=1):
     """
@@ -152,7 +153,7 @@ def load_image_covers_and_random_bit_secrets(how_many,
     :return: the covers and channels
     """
 
-    covers = load_images(image_dir, shuffle=True)
+    covers = load_images(image_dir, shuffle=True, scale=scale)
 
     if how_many > len(covers):
         covers = np.vstack([covers]*int(math.ceil(how_many/len(covers))))
