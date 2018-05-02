@@ -57,8 +57,7 @@ class LsbDetection(Eve):
             Dense(1, activation='tanh')
         )(censor)
 
-        censor = Dense(4096, activation='tanh')(Flatten()(censor))
-        censor = Dense(1024, activation='tanh')(censor)
+        censor = Dense(1024, activation='tanh')(Flatten()(censor))
         censor = Dense(1, activation='sigmoid')(censor)
 
         model = Model(inputs=censorship_input, outputs=censor)
