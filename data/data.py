@@ -265,7 +265,6 @@ class LsbSteganography:
         return new_covers
 
 
-
     @staticmethod
     def decode(covers):
         """

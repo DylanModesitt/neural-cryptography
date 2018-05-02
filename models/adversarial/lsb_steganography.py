@@ -14,7 +14,11 @@ from keras.optimizers import Adam
 # self
 from models.adversarial.eve import Eve, AdversarialGame
 from general.layers import ElementWise
-from data.data import load_image_covers_and_ascii_bit_secrets, LsbSteganography
+from data.data import (
+    load_image_covers_and_ascii_bit_secrets,
+    load_image_covers_and_random_bit_secrets,
+    LsbSteganography
+)
 
 from general.utils import join_list_valued_dictionaries, replace_encryptions_with_random_entries
 
@@ -32,6 +36,7 @@ class LsbDetection(Eve):
     """
 
     real_label: int = 1
+    random_secrets: bool = False
 
     def initialize_model(self):
 
@@ -97,6 +102,7 @@ class LsbDetection(Eve):
             # shuffle
             p = np.random.permutation(len(covers))
             covers, hidden_secrets, y = covers[p], hidden_secrets[p], y[p]
+            covers *= 1./255.
 
             covers[:len(covers)//2] = hidden_secrets[:len(covers)//2]
             y[:len(covers)//2] = self.real_label
