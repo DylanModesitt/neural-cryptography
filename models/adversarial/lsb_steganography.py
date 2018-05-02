@@ -108,12 +108,12 @@ class LsbDetection(Eve):
             covers, secrets = load_image_covers_and_ascii_bit_secrets(iterations_per_epoch*batch_size,
                                                                       scale=1)
 
-            hidden_secrets = LsbSteganography.encode(covers, secrets, scale=1)
+            hidden_secrets = LsbSteganography.encode(covers, secrets)
 
             print(hidden_secrets[0][0][0])
             print(secrets[0][0][0])
 
-            print((hidden_secrets % 2) == secrets)
+            print((hidden_secrets*255 % 2) == secrets)
 
             # y = np.zeros(len(covers)) if self.real_label == 0 else np.ones(len(covers))
             #
