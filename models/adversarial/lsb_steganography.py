@@ -44,7 +44,9 @@ class LsbDetection(Eve):
 
         censorship_input = Input(shape=(height, width, channels))
 
-        cen = Conv2D(32, (4, 4), activation='relu', padding='same')(censorship_input)
+        transform = Dense(channels, activation='relu')(censorship_input)
+
+        cen = Conv2D(32, (4, 4), activation='relu', padding='same')(transform)
         cen = Conv2D(32, (4, 4), activation='relu', padding='same')(cen)
         cen = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(cen)
 
