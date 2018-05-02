@@ -88,7 +88,7 @@ class LsbDetection(Eve):
             return K.mean(K.equal(y_true, K.round(y_pred)))
 
         model = Model(inputs=censorship_input, outputs=reveal_cover)
-        model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=[accuracy])
+        model.compile(optimizer=Adam(), loss='mae', metrics=[accuracy])
 
         if self.verbose > 0:
             model.summary()
