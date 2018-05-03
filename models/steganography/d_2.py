@@ -22,7 +22,7 @@ from keras.utils import plot_model
 from models.model import NeuralCryptographyModel
 from models.steganography.steganography import SteganographyData
 from general.utils import join_list_valued_dictionaries, balance_real_and_fake_samples
-from data.data import load_image_covers_and_random_bit_secrets
+from data.data import load_image_covers_and_random_bit_secrets, load_image_covers_and_image_secrets
 
 
 @dataclass
@@ -315,7 +315,7 @@ class Steganography2D(NeuralCryptographyModel):
 
             self.print('epoch [ %s / %s]' % (i+1, steganography_epochs))
             self.print('>> generating data')
-            covers, secrets = load_image_covers_and_random_bit_secrets(iterations_per_epoch*batch_size)
+            covers, secrets = load_image_covers_and_image_secrets(iterations_per_epoch*batch_size)
 
             self.print('>> fitting')
             steganography_history = self.steganography_model.fit(
