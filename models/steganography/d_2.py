@@ -400,6 +400,7 @@ if __name__ == '__main__':
 
     model = Steganography2D()
     model(censorship_discriminator_epochs=0,
+          prefit_decryptionn_epochs=1,
           adversarial_epochs=0,
           steganography_epochs=50)
 
