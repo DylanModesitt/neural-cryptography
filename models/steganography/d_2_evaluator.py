@@ -44,7 +44,7 @@ class SteganographyImageCoverWrapper:
         desired_len = self.model.cover_height * self.model.cover_width * self.model.secret_channels
 
         if len(bits) < desired_len:
-            bits += [0]*(desired_len - len(bits))
+            bits += list(np.random.randint(0, 2, size=(desired_len - len(bits),)))
 
         bits = bits[:desired_len]
         bits = np.array(bits)
@@ -61,7 +61,7 @@ class SteganographyImageCoverWrapper:
 
 if __name__ == '__main__':
 
-    model = Steganography2D(dir='./bin/steganography_2')
+    model = Steganography2D(dir='./bin/steganography_3')
     model.load()
 
     helper = SteganographyImageCoverWrapper(model)
