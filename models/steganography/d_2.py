@@ -68,7 +68,7 @@ class Steganography2D(NeuralCryptographyModel):
     # in evaluation, zeros can pad
 
     cover_channels: int = 3
-    secret_channels: int = 1
+    secret_channels: int = 3
 
     conv_filters: int = 50
     convolution_dimmensions: Tuple[int] = (3, 4, 5)
@@ -172,7 +172,7 @@ class Steganography2D(NeuralCryptographyModel):
         reveal_final = Concatenate(name='revealed')([reveal_conv_large, reveal_conv_medium, reveal_conv_small])
 
         reveal_secret = Conv2D(filters=self.secret_channels, kernel_size=1, name='reconstructed_secret',
-                               padding='same', activation='sigmoid')(reveal_final)
+                               padding='same')(reveal_final)
 
         self.revealing_model = Model(inputs=[reveal_input], outputs=[reveal_secret])
 
@@ -223,12 +223,12 @@ class Steganography2D(NeuralCryptographyModel):
                                                     hidden_secret
                                                 ])])
 
-        self.steganography_model_reveal.compile(optimizer=Adam(), loss=['binary_crossentropy'], metrics=['acc'])
+        self.steganography_model_reveal.compile(optimizer=Adam(), loss=['mae'], metrics=['acc'])
 
         self.steganography_model = Model(inputs=[cover_input, secret_input],
                                          outputs=[hidden_secret, self.revealing_model([hidden_secret])])
 
-        self.steganography_model.compile(optimizer=Adam(), loss=['mae', 'binary_crossentropy'],
+        self.steganography_model.compile(optimizer=Adam(), loss=['mae', 'mae'],
                                          loss_weights=[1, self.beta])
 
         for layer in self.censorship_model.layers:
@@ -239,7 +239,7 @@ class Steganography2D(NeuralCryptographyModel):
                                                 self.censorship_model([hidden_secret])],
                                        name='seganography_and_adversary')
 
-        self.adversarial_model.compile(optimizer=Adam(), loss=['mae', 'binary_crossentropy', 'binary_crossentropy'],
+        self.adversarial_model.compile(optimizer=Adam(), loss=['mae', 'mae', 'mae'],
                                        loss_weights=[1, self.beta, self.gamma])
 
         if self.verbose > 0:

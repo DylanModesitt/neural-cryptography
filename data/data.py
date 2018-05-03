@@ -167,6 +167,30 @@ def load_image_covers_and_random_bit_secrets(how_many,
     return covers, secret_modifier(secrets)
 
 
+def load_image_covers_and_image_secrets(how_many,
+                                        image_dir='./data/images',
+                                        scale=1. / 255.):
+
+    covers = load_images(image_dir, shuffle=True, scale=scale)
+    p = np.random.permutation(len(covers))
+    secrets = covers[p]
+
+    if how_many > len(covers):
+        covers = np.vstack([covers] * int(math.ceil(how_many / len(covers))))
+        secrets = np.vstack([secrets] * int(math.ceil(how_many / len(secrets))))
+
+    covers = covers[:how_many]
+    secrets = secrets[:how_many]
+
+    p1 = np.random.permutation(len(covers))
+    p2 = np.random.permutation(len(secrets))
+
+    covers = covers[p]
+    secrets = secrets[p]
+
+    return covers, secrets
+
+
 def load_image_covers_and_ascii_bit_secrets(how_many,
                                             image_dir='./data/images',
                                             secret_modifier=DEFAULT_SECRET_SCALER,
