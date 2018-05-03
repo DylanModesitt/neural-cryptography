@@ -329,6 +329,7 @@ class Steganography2D(NeuralCryptographyModel):
             ).history
 
             s_history.append(steganography_history)
+            self.save()
 
         for i in range(0, censorship_discriminator_epochs):
 
@@ -404,7 +405,7 @@ if __name__ == '__main__':
     model(censorship_discriminator_epochs=0,
           prefit_decryptionn_epochs=0,
           adversarial_epochs=0,
-          steganography_epochs=200)
+          steganography_epochs=50)
 
     model.visualize()
 
