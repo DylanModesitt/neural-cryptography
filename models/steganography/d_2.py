@@ -140,7 +140,9 @@ class Steganography2D(NeuralCryptographyModel):
         hiding_conv_large = Conv2D(self.conv_filters, kernel_size=d_large, **conv_params)(hiding_cat)
         hiding_final = Concatenate(name='hidden')([hiding_conv_large, hiding_conv_medium, hiding_conv_small])
 
-        hidden_secret = Conv2D(filters=self.cover_channels, kernel_size=1, name='hidden_secret')(hiding_final)
+        hidden_secret = Conv2D(filters=self.cover_channels, kernel_size=1, padding='same', name='hidden_secret')(
+            hiding_final
+        )
 
         self.hiding_model = Model(inputs=[cover_input, secret_input], outputs=[hidden_secret])
 
@@ -174,7 +176,7 @@ class Steganography2D(NeuralCryptographyModel):
         reveal_secret = Conv2D(filters=self.secret_channels, kernel_size=1, name='reconstructed_secret',
                                padding='same')(reveal_final)
 
-        self.revealing_model = Model(inputs=[reveal_input], outputs=[reveal_secret])
+        self.revealing_model = Model(inputs=[reveal_input], outputs=[reveal_secret], name='revealing_model')
 
         ################################
         # Censorship Network
@@ -228,8 +230,8 @@ class Steganography2D(NeuralCryptographyModel):
         self.steganography_model = Model(inputs=[cover_input, secret_input],
                                          outputs=[hidden_secret, self.revealing_model([hidden_secret])])
 
-        self.steganography_model.compile(optimizer=Adam(), loss=['mae', 'mae'],
-                                         loss_weights=[1, self.beta])
+        self.steganography_model.compile(optimizer=Adam(), loss=['mse', 'mse'],
+                                         loss_weights=[1, self.beta], metrics=['mae'])
 
         for layer in self.censorship_model.layers:
             layer.trainable = False
@@ -402,7 +404,7 @@ if __name__ == '__main__':
     model(censorship_discriminator_epochs=0,
           prefit_decryptionn_epochs=0,
           adversarial_epochs=0,
-          steganography_epochs=50)
+          steganography_epochs=200)
 
     model.visualize()
 

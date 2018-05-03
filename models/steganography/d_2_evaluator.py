@@ -38,6 +38,21 @@ class SteganographyImageCoverWrapper:
 
         return hidden_secret
 
+    def hide_image_in_image(self, return_cover=True, return_secret=True):
+
+        idx = np.random.randint(0, len(self.images))
+        idx2 = np.random.randint(0, len(self.images))
+
+        cover = self.images[idx]
+        secret = self.images[idx2]
+
+        hidden_secret = self.model.hide(cover, secret)
+
+        if return_cover and return_secret:
+            return hidden_secret, cover, secret
+
+        return hidden_secret
+
     def hide_str_in_random_image_cover(self, s):
 
         bits = bits_from_string(s)
@@ -52,6 +67,10 @@ class SteganographyImageCoverWrapper:
 
         return self.hide_in_random_image_cover(bits)
 
+    def decode_image_in_cover(self, cover):
+        secret = self.model.reveal(cover)
+        return secret
+
     def decode_str_in_cover(self, cover):
 
         secret = np.round(self.model.reveal(cover))
@@ -61,17 +80,19 @@ class SteganographyImageCoverWrapper:
 
 if __name__ == '__main__':
 
-    model = Steganography2D(dir='./bin/steganography_3')
+    model = Steganography2D(dir='./bin/stego_img_in_img1')
     model.load()
 
     helper = SteganographyImageCoverWrapper(model)
 
-    hidden_secret, cover = helper.hide_str_in_random_image_cover('Cryptography is the study of "mathematical" systems.')
-    print(helper.decode_str_in_cover(hidden_secret))
+    hidden_secret, cover, secret = helper.hide_image_in_image(return_cover=True)
+    revealed_secret = array_to_img(helper.decode_image_in_cover(hidden_secret))
+    hidden_secret, cover, secret = array_to_img(hidden_secret), array_to_img(cover), array_to_img(secret)
 
-    hidden_secret, cover = array_to_img(hidden_secret), array_to_img(cover)
     cover.save('./cover.png', 'PNG')
+    secret.save('./secret.png', 'PNG')
     hidden_secret.save('./hidden_secret.png', 'PNG')
+    revealed_secret.save('./revealed_secret.png', 'PNG')
 
 
 

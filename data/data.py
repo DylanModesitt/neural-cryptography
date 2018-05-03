@@ -169,7 +169,7 @@ def load_image_covers_and_random_bit_secrets(how_many,
 
 def load_image_covers_and_image_secrets(how_many,
                                         image_dir='./data/images',
-                                        scale=1. / 255.):
+                                        scale=1./255.):
 
     covers = load_images(image_dir, shuffle=True, scale=scale)
     p = np.random.permutation(len(covers))
@@ -185,8 +185,8 @@ def load_image_covers_and_image_secrets(how_many,
     p1 = np.random.permutation(len(covers))
     p2 = np.random.permutation(len(secrets))
 
-    covers = covers[p]
-    secrets = secrets[p]
+    covers = covers[p1]
+    secrets = secrets[p2]
 
     return covers, secrets
 
