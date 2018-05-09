@@ -106,7 +106,8 @@ class ElementWise:
                  bias_regularizer=None,
                  activity_regularizer=None,
                  kernel_constraint=None,
-                 bias_constraint=None):
+                 bias_constraint=None,
+                 name=None):
         """
         An element-wise transform of several layers. For example,
         given two inputs:
@@ -160,6 +161,8 @@ class ElementWise:
         self.input_spec = InputSpec(min_ndim=3)
         self.supports_masking = False
 
+        self.name = name
+
     def __call__(self, inputs):
         """
         Apply an element-wise function as built by the
@@ -190,12 +193,12 @@ class ElementWise:
         make local functions of the individual inputs.
         
         """
-        intertwine = Intertwine()([
+        intertwine = Intertwine(name=(self.name + '_intertwine') if self.name is not None else None)([
             *inputs
         ])
 
         reshape = Reshape(
-           (-1, 1)
+           (-1, 1), name=(self.name + '_reshape') if self.name is not None else None
         )(intertwine)
 
         """
@@ -222,7 +225,8 @@ class ElementWise:
                                 bias_regularizer=self.bias_regularizer,
                                 activity_regularizer=self.activity_regularizer,
                                 kernel_constraint=self.kernel_constraint,
-                                bias_constraint=self.bias_constraint)(reshape)
+                                bias_constraint=self.bias_constraint,
+                                name=(self.name + '_connection') if self.name is not None else None)(reshape)
 
 
         """
@@ -231,10 +235,12 @@ class ElementWise:
         
             (batch_size, timesteps, units.first)
         """
+        num = 0
         if len(self.units) > 1:
 
             for units, activation in zip(self.units[1:], self.activation[1:]):
 
+                num += 1
                 dense = Dense(
                       units,
                       activation=activation,
@@ -245,12 +251,13 @@ class ElementWise:
                       bias_regularizer=self.bias_regularizer,
                       activity_regularizer=self.activity_regularizer,
                       kernel_constraint=self.kernel_constraint,
-                      bias_constraint=self.bias_constraint
+                      bias_constraint=self.bias_constraint,
+                      name=(self.name + '_dense_' + str(num)) if self.name is not None else None
                 )
 
                 if self.share_element_weights:
                     Connection = TimeDistributed(
-                        dense
+                        dense, name=(self.name + '_time_dist_' + str(num)) if self.name is not None else None
                     )
                 else:
                     Connection = dense

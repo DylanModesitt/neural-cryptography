@@ -80,7 +80,7 @@ class SteganographyImageCoverWrapper:
 
 if __name__ == '__main__':
 
-    model = Steganography2D(dir='./bin/stego_img_in_img1')
+    model = Steganography2D(dir='./bin/2018-05-03_13:02__61857339')
     model.load()
 
     helper = SteganographyImageCoverWrapper(model)

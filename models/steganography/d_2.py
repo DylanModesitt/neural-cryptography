@@ -78,6 +78,8 @@ class Steganography2D(NeuralCryptographyModel):
     beta = 0.75
     gamma = 1
 
+    add_noise_to_secret: bool = False
+
     def initialize_model(self):
 
         d_small, d_medium, d_large = self.convolution_dimmensions
@@ -265,10 +267,10 @@ class Steganography2D(NeuralCryptographyModel):
                              (self.cover_height, self.cover_width, self.secret_channels))
 
         secret = np.array([secret])
-        cover = np.array([cover * self.image_scale])
+        cover = np.array([cover])
 
         hidden_secret = self.hiding_model.predict([cover, secret])[0]
-        return hidden_secret * (1./self.image_scale)
+        return hidden_secret / self.image_scale
 
     def reveal(self, hidden_secret):
 
