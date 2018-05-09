@@ -27,6 +27,10 @@ class SteganographyImageCoverWrapper:
         self.images = load_images(path=image_dir,
                                   scale=steg_2d_model.image_scale)
 
+    def hide_given_image_in_given_cover(self, secret, cover):
+        hidden_secret = self.model.hide(cover, secret)
+        return hidden_secret
+
     def hide_in_random_image_cover(self, secret, return_cover=True):
 
         idx = np.random.randint(0, len(self.images))
