@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Neural Steganography</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+</head>
+<body>
+    <header>
+        <h1>Neural Steganography: Video-in-Video</h1>
+        <p1>Choose a video to hide, as well as a video to hide it in. </p1>
+    </header>
+    <div class=section id=inputs>
+        <div class=vid>
+            <p>Choose a secret to send:</p>
+            <video width="128" height="128" controls>
+                <source src="{{ url_for('static', filename=secret) }}">
+            </video><br>
+            <form action="/select" method=post>
+	        <input type="text" name="secret" placeholder="Integer [1-54]">
+	    </form>
+        </div>
+        <div class=vid>
+            <p>Choose a cover to hide the secret in:</p>
+            <video width="128" height="128" controls>
+                <source src="{{ url_for('static', filename=cover) }}">
+            </video><br>
+	    <form action="/select" method=post>
+                <input type="text" name="cover" placeholder="Integer [1-54]">
+             </form>
+	 </div>
+    </div>
+    <div class=section id=hidden>
+        <div class=vid>
+	    <form action="/compute" method=post>
+		<input type="submit" name="compute" value="Hide Video"/>
+	    </form>
+            <p>Here is the hidden secret to send:</p>
+            <video width="128" height="128" controls>
+                <source src="{{ url_for('static', filename=hidden) }}">
+            </video>
+        </div>
+    </div>
+    <div class=section id=revealed>
+        <p>Here is the revealed secret video:</p>
+        <div class=vid>
+            <video width="128" height="128" controls>
+                <source src="{{ url_for('static', filename=revealed) }}">
+            </video>
+        </div>
+    </div>
+    <div class=section id=combined>
+        <p>Here are all the above videos synchronized:</p>
+        <p>(Top-left is the secret, top-right is the cover, bottom-right is the hidden message, bottom-left is the revealed message)</p>
+        <div class=vid>
+            <video width="256" height="256" controls>
+                <source src="{{ url_for('static', filename=combined) }}">
+            </video>
+        </div>
+    </div>
+</body>
+</html>

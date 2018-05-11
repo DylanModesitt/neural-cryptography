@@ -29,9 +29,11 @@ class SteganographyImageCoverWrapper:
         self.images = load_images(path=image_dir,
                                   scale=steg_2d_model.image_scale)
 
-    def hide_given_image_in_given_cover(self, secret, cover):
-        hidden_secret = self.model.hide(cover, secret)
-        return hidden_secret
+    def hide_array(self, secret_array, cover_array):
+        return self.model.hide_array(np.array(cover_array), np.array(secret_array))
+
+    def reveal_array(self, hidden_array):
+        return self.model.reveal_array(hidden_array)
 
     def hide_in_random_image_cover(self, secret, return_cover=True):
 
@@ -92,6 +94,8 @@ def video_to_frames(directory, filename, frame_size=32):
     center_location = './data/centered_video_frames/' + filename[:-4] + '/'
     scaled_location = './data/scaled_video_frames/' + filename[:-4] + '/'
 
+    scaled_vid = cv2.VideoWriter('./data/scaled_videos/' + filename, fourcc, float(30), (frame_size, frame_size), True)
+
     try:
         if not os.path.exists(center_location):
             os.makedirs(center_location)
@@ -120,6 +124,7 @@ def video_to_frames(directory, filename, frame_size=32):
         x, y, _ = frame.shape
         cv2.imwrite(centered_name, frame[int((x/2) - (frame_size/2)) : int((x/2) + (frame_size/2)), int((y/2) - (frame_size/2)): int((y/2) + (frame_size/2))])
         cv2.imwrite(scaled_name, frame[:x - (x % frame_size) : x // frame_size, :y - (y % frame_size): y // frame_size])
+        scaled_vid.write(frame[:x - (x % frame_size) : x // frame_size, :y - (y % frame_size): y // frame_size])
 
         # To stop duplicate images
         currentFrame += 1
@@ -130,35 +135,46 @@ def video_to_frames(directory, filename, frame_size=32):
 
     return center_location, scaled_location
 
-def video_in_video(helper, secret_path, cover_path, request_number):
-    covers = load_images(path=cover_path, scale=model.image_scale)
-    secrets = load_images(path=secret_path, scale=model.image_scale)
+def video_in_video(helper, secret_num, cover_num, request_num):
+    secret_path = "./data/scaled_video_frames/" + str(secret_num)
+    cover_path = "./data/scaled_video_frames/" + str(cover_num)
+    covers = load_images(path=cover_path, scale=helper.model.image_scale)
+    secrets = load_images(path=secret_path, scale=helper.model.image_scale)
 
-    output_dir = "./data/video_output/" + request_number + "/"
+    output_dir = "./web/static/data/video_output/"
     fourcc = VideoWriter_fourcc(*'XVID')
-    cover_vid = cv2.VideoWriter(output_dir + 'cover.mp4', fourcc, float(30), (32, 32), True)
-    secret_vid = cv2.VideoWriter(output_dir + 'secret.mp4', fourcc, float(30), (32, 32), True)
-    hidden_vid = cv2.VideoWriter(output_dir + 'hidden.mp4', fourcc, float(30), (32, 32), True)
-    revealed_vid = cv2.VideoWriter(output_dir + 'revealed.mp4', fourcc, float(30), (32, 32), True)
-    combined_vid = cv2.VideoWriter(output_dir + 'combined.mp4', fourcc, float(30), (64, 64), True)
+    #cover_vid = cv2.VideoWriter(output_dir + 'cover' + str(request_num) + '.mp4', fourcc, float(30), (32, 32), True)
+    #secret_vid = cv2.VideoWriter(output_dir + 'secret' + str(request_num) + '.mp4', fourcc, float(30), (32, 32), True)
+    hidden_vid = cv2.VideoWriter(output_dir + 'hidden' + str(request_num) + '.mp4', fourcc, float(30), (32, 32), True)
+    revealed_vid = cv2.VideoWriter(output_dir + 'revealed' + str(request_num) + '.mp4', fourcc, float(30), (32, 32), True)
+    combined_vid = cv2.VideoWriter(output_dir + 'combined' + str(request_num) + '.mp4', fourcc, float(30), (64, 64), True)
 
-    # Iterate through all frames
+    cover_array = []
+    secret_array = secrets
+
     for i in range(len(secrets)):
-        # Produce the 4 frames
-        cover, secret = covers[i % len(covers)], secrets[i]
-        hidden_secret = np.array(array_to_img(helper.hide_given_image_in_given_cover(cover, secret)))
-        revealed_secret = np.array(array_to_img(helper.decode_image_in_cover(hidden_secret)))
-        cover, secret = np.array(array_to_img(cover)), np.array(array_to_img(secret))
+        cover = covers[i % len(covers)]
+        cover_array.append(cover)
 
-        # Write individual frames
-        cover_vid.write(cover)
-        secret_vid.write(secret)
-        hidden_vid.write(hidden_secret)
-        revealed_vid.write(revealed_secret)
+    print("Hiding secret")
+    hidden_secrets = helper.hide_array(cover_array, secret_array)
+
+    print("Revealing secret")
+    revealed_secrets = helper.reveal_array(hidden_secrets)
+
+    print("Writing videos")
+    for i in range(len(secret_array)):
+        h = np.array(array_to_img(hidden_secrets[i]))
+        r = np.array(array_to_img(revealed_secrets[i]))
+        hidden_vid.write(h[:,:,::-1])
+        revealed_vid.write(r[:,:,::-1])
+
+        cover = np.array(array_to_img(cover_array[i]))
+        secret = np.array(array_to_img(secret_array[i]))
 
         # Combine individual frames
-        frameTop = np.concatenate((np.array(array_to_img(secret)), np.array(array_to_img(cover))), axis=1)
-        frameBottom = np.concatenate((hidden_secret, revealed_secret), axis=1)
+        frameTop = np.concatenate((cover, secret), axis=1)
+        frameBottom = np.concatenate((h, r), axis=1)
         frame = np.concatenate((frameTop, frameBottom), axis=0)
         frame = frame[:,:,::-1]
         combined_vid.write(frame)
@@ -180,16 +196,9 @@ if __name__ == '__main__':
 
     helper = SteganographyImageCoverWrapper(model)
 
-    path = './data/videos/'
-    for file in os.listdir(path):
-        _ , _ = video_to_frames(path, file, frame_size=32)
+#    path = './data/videos/'
+#    for file in os.listdir(path):
+#        _ , _ = video_to_frames(path, file, frame_size=32)
     #video_in_video(helper)
-
-
-
-
-
-
-
-
+    video_in_video(helper, 1, 2, 0)
 
