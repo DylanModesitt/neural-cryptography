@@ -157,7 +157,7 @@ def video_in_video(helper, secret_num, cover_num, request_num):
         cover_array.append(cover)
 
     print("Hiding secret")
-    hidden_secrets = helper.hide_array(cover_array, secret_array)
+    hidden_secrets = helper.hide_array(secret_array, cover_array)
 
     print("Revealing secret")
     revealed_secrets = helper.reveal_array(hidden_secrets)
@@ -173,7 +173,7 @@ def video_in_video(helper, secret_num, cover_num, request_num):
         secret = np.array(array_to_img(secret_array[i]))
 
         # Combine individual frames
-        frameTop = np.concatenate((cover, secret), axis=1)
+        frameTop = np.concatenate((secret, cover), axis=1)
         frameBottom = np.concatenate((h, r), axis=1)
         frame = np.concatenate((frameTop, frameBottom), axis=0)
         frame = frame[:,:,::-1]
@@ -190,15 +190,15 @@ def picture_in_picture(helper):
     revealed_secret.save('./revealed_secret.png', 'PNG')
 
 
-if __name__ == '__main__':
-    model = Steganography2D(dir='./bin/2018-05-03_13:02__61857339')
-    model.load()
+#if __name__ == '__main__':
+#    model = Steganography2D(dir='./bin/2018-05-03_13:02__61857339')
+#    model.load()
 
-    helper = SteganographyImageCoverWrapper(model)
+#    helper = SteganographyImageCoverWrapper(model)
 
 #    path = './data/videos/'
 #    for file in os.listdir(path):
 #        _ , _ = video_to_frames(path, file, frame_size=32)
     #video_in_video(helper)
-    video_in_video(helper, 1, 2, 0)
+#    video_in_video(helper, 1, 2, 0)
 
