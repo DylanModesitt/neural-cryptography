@@ -44,6 +44,8 @@ def get_viv():
     hidden = ""
     revealed = ""
     combined = ""
+    secret_num = 0
+    cover_num = 0
 
     return render_template("viv.html", secret=secret, cover=cover,
                            hidden=hidden, revealed=revealed, combined=combined)
@@ -54,6 +56,8 @@ def get_pip():
     cover = ""
     hidden = ""
     revealed = ""
+    secret_num = 0
+    cover_num = 0
 
     return render_template("pip.html", secret=secret, cover=cover,
                            hidden=hidden, revealed=revealed)
@@ -148,7 +152,7 @@ def compute_image():
         picture_in_picture(helper, secret_num, cover_num, request_number)
         path = "./data/image_output/"
         hidden = path + "hidden" + str(request_number) + ".png"
-        combined = path + "combined" + str(request_number) + ".png"
+        revealed = path + "revealed" + str(request_number) + ".png"
         request_number += 1
 
     secret_num = 0

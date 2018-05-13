@@ -110,6 +110,12 @@ def gen_secure_otp_data(n, length):
     return (a*2-1,
             xor*2-1)
 
+def load_image(number, path='./web/static/images', scale=1./255):
+    print(number, os.path.join(path, "{:05}".format(number) + ".png"))
+    img = load_img(os.path.join(path, "{:05}".format(number) + ".png"))
+    x = np.array(img)
+    x = x.astype(float) * scale
+    return x
 
 def load_images(path='./data/images/',
                 shuffle=False,
@@ -131,7 +137,6 @@ def load_images(path='./data/images/',
     if shuffle:
         x = x[np.random.permutation(len(x))]
 
-    x *= scale
     return x
 
 

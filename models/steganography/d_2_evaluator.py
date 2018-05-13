@@ -10,7 +10,7 @@ from cv2 import VideoWriter, VideoWriter_fourcc
 
 # self
 from models.steganography.d_2 import Steganography2D
-from data.data import load_images
+from data.data import load_image, load_images
 from general.utils import bits_from_string, string_from_bits
 
 from models.model import NeuralCryptographyModel
@@ -180,15 +180,15 @@ def video_in_video(helper, secret_num, cover_num, request_num):
         combined_vid.write(frame)
 
 def picture_in_picture(helper, secret_num, cover_num, request_num):
-    cover = helper.images[cover_num]
-    secret = helper.images[secret_num]
+    cover = load_image(cover_num)
+    secret = load_image(secret_num)
 
-    hidden_secret, cover, secret = helper.hide_image_in_image(return_cover=True)
-    revealed_secret = array_to_img(helper.decode_image_in_cover(hidden_secret))
-    hidden_secret, cover, secret = array_to_img(hidden_secret), array_to_img(cover), array_to_img(secret)
+    hidden_secret = helper.hide_array([secret], [cover])
+    revealed_secret = array_to_img(helper.decode_image_in_cover(hidden_secret[0]))
+    hidden_secret, cover, secret = array_to_img(hidden_secret[0]), array_to_img(cover), array_to_img(secret)
 
-    #cover.save('./cover.png', 'PNG')
-    #secret.save('./secret.png', 'PNG')
+    cover.save('./web/static/data/image_output/cover.png', 'PNG')
+    secret.save('./web/static/data/image_output/secret.png', 'PNG')
     hidden_secret.save('./web/static/data/image_output/hidden' + str(request_num)  + '.png', 'PNG')
     revealed_secret.save('./web/static/data/image_output/revealed' + str(request_num)  + '.png', 'PNG')
 
