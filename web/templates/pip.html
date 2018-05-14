@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Neural Steganography</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='viv_style.css') }}"/>
+</head>
+<body>
+    <header>
+        <div class=title>
+            <h1>Neural Steganography: Picture-in-Picture</h1><br>
+            <p1>Choose an image to hide, as well as an image to hide it in. </p1>
+        </div>
+        <div class=tabs>
+            <a class=link href="{{ url_for('get_viv') }}">Video-In-Video</a>
+            <a class=link href="{{ url_for('get_pip') }}">Picture-In-Picture</a>
+        </div>
+    </header>
+    <div class=section id=inputs>
+        <div class=vid>
+            <p>Choose a secret to send:</p>
+            <img width="128" height="128" src="{{ url_for('static', filename=secret) }}"/><br>
+            <form action="/select_image" method=post>
+	        <input type="text" name="secret" placeholder="Integer [1-54]">
+	    </form>
+        </div>
+        <div class=vid>
+            <p>Choose a cover to hide the secret in:</p>
+            <img width="128" height="128" src="{{ url_for('static', filename=cover) }}"/><br>
+	    <form action="/select_image" method=post>
+                <input type="text" name="cover" placeholder="Integer [1-54]">
+             </form>
+	 </div>
+    </div>
+    <div class=section id=hidden>
+        <div class=vid>
+	    <form action="/compute_image" method=post>
+		<input type="submit" name="compute" value="Hide Image"/>
+	    </form>
+            <p>Here is the hidden secret to send:</p>
+            <img width="128" height="128" src="{{ url_for('static', filename=hidden) }}"/><br>
+        </div>
+    </div>
+    <div class=section id=revealed>
+        <p>Here is the revealed secret:</p>
+        <div class=vid>
+            <img width="128" height="128" src="{{ url_for('static', filename=revealed) }}"/><br>
+        </div>
+    </div>
+</body>
+</html>
