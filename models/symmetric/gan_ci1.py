@@ -34,8 +34,8 @@ class EncryptionDetectionGAN(GAN):
 
     This game is somewhat based on the CPA game.
     """
-    alice_bitwise_latent_dims: Sequence[int] = (24, 8, 1)
-    bob_bitwise_latent_dims: Sequence[int] = (24, 8, 1)
+    alice_bitwise_latent_dims: Sequence[int] = (10, 1)
+    bob_bitwise_latent_dims: Sequence[int] = (10, 1)
     alice_share_bitwise_weights: bool = False
     bob_share_bitwise_weights: bool = False
 
