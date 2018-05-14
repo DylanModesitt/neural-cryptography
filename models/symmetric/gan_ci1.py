@@ -118,7 +118,8 @@ class EncryptionDetectionGAN(GAN):
 
             alice_encryption = Flatten(name='alice_encryption')(
                 ElementWise(self.bob_bitwise_latent_dims, activation='tanh',
-                            share_element_weights=self.bob_share_bitwise_weights)([
+                            share_element_weights=self.bob_share_bitwise_weights,
+                            use_bias=False)([
                     message_input,
                     key_input
                 ]),
@@ -126,7 +127,8 @@ class EncryptionDetectionGAN(GAN):
 
             bob_decryption = Flatten(name='bob_decryption')(
                 ElementWise(self.bob_bitwise_latent_dims, activation='tanh',
-                            share_element_weights=self.bob_share_bitwise_weights)([
+                            share_element_weights=self.bob_share_bitwise_weights,
+                            use_bias=False)([
                     alice_encryption,
                     key_input
                 ]),
