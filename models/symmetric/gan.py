@@ -253,7 +253,7 @@ class GAN(NeuralCryptographyModel, ABC):
                                                        batch_size,
                                                        self.message_length)
 
-            real_labels = np.ones(len(msgs)) if self.discriminator_real_label == 1 else np.zeros(len(msgs))
+            real_labels = np.zeros(len(msgs)) if self.discriminator_real_label == 1 else np.ones(len(msgs))
 
             return self.generator.fit(
                 x=[msgs, keys],
