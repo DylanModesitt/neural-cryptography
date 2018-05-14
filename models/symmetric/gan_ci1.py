@@ -36,8 +36,8 @@ class EncryptionDetectionGAN(GAN):
     """
     alice_bitwise_latent_dims: Sequence[int] = (10, 1)
     bob_bitwise_latent_dims: Sequence[int] = (10, 1)
-    alice_share_bitwise_weights: bool = False
-    bob_share_bitwise_weights: bool = False
+    alice_share_bitwise_weights: bool = True
+    bob_share_bitwise_weights: bool = True
 
     tie_alice_and_bob = False
 
