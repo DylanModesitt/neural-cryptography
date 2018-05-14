@@ -98,7 +98,8 @@ class EncryptionDetectionGAN(GAN):
                                  'have the same weight sharing settings.')
 
             enc_dec = ElementWise(self.alice_bitwise_latent_dims, activation='tanh',
-                                  share_element_weights=self.alice_share_bitwise_weights)
+                                  share_element_weights=self.alice_share_bitwise_weights,
+                                  use_bias=False)
 
             alice_encryption = Flatten()(
                 enc_dec([
