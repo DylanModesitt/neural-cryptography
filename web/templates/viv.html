@@ -3,57 +3,88 @@
 <head>
     <title>Neural Steganography</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='viv_style.css') }}"/>
+    <!-- <link rel="stylesheet" href="viv_style.css"/>  -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet"/>
+
 </head>
 <body>
-    <header>
-        <div class=title>
-            <h1>Neural Steganography: Video-in-Video</h1><br>
-            <p1>Choose a video to hide, as well as a video to hide it in. </p1>
+    <header class = "header">
+        <div class = "neural">
+            <h1 > Neural Steganography <br>
+                <span>Video-in-Video </span>
+            </h1>
         </div>
-        <div class=tabs>
-            <a class=link href="{{ url_for('get_viv') }}">Video-In-Video</a>
-            <a class=link href="{{ url_for('get_pip') }}">Picture-In-Picture</a>
+        <div class = "tabs">
+            <a class=link href="{{ url_for('get_pip') }}">Picture-in-Picture</a>
         </div>
+        <!-- <p1>Choose a video to hide, as well as a video to hide it in. </p1> -->
     </header>
-    <div class=section id=inputs>
-        <div class=vid>
-            <p>Choose a secret to send:</p>
-            <video width="128" height="128" controls>
+    <div class = "element" id = "secret_to_send">
+        <div class = "vid" >
+            <p>Choose a secret to send</p>
+
+            <video controls>
                 <source src="{{ url_for('static', filename=secret) }}">
-            </video><br>
-            <form action="/select_video" method=post>
-	        <input type="text" name="secret" placeholder="Integer [1-54]">
-	    </form>
+            </video>
+
+            <br>
+            <form class = "form" action="/select" method=post>
+	            <input type="text" name="secret" placeholder="Integer [1-54]">
+	        </form>
         </div>
+    </div>
+
+    <div class = "navs">
+        <button class="btn btn-primary left" id = "left" type="submit">
+            <span class="glyphicon glyphicon-arrow-left"></span>
+        </button>
+        <button class="btn btn-primary right" id = "right" type="submit">
+            <span class="glyphicon glyphicon-arrow-right"></span>
+        </button>
+    </div>
+
+    <div class = "make_none cover element" id = "cover">
         <div class=vid>
             <p>Choose a cover to hide the secret in:</p>
-            <video width="128" height="128" controls>
+            <video controls>
                 <source src="{{ url_for('static', filename=cover) }}">
             </video><br>
-	    <form action="/select_video" method=post>
+	    <form action="/select" method=post>
                 <input type="text" name="cover" placeholder="Integer [1-54]">
              </form>
-	 </div>
-    </div>
-    <div class=section id=hidden>
-        <div class=vid>
-	    <form action="/compute_video" method=post>
-		<input type="submit" name="compute" value="Hide Video"/>
-	    </form>
-            <p>Here is the hidden secret to send:</p>
-            <video width="128" height="128" controls>
-                <source src="{{ url_for('static', filename=hidden) }}">
-            </video>
         </div>
     </div>
-    <div class=section id=revealed>
-        <p>Here is the revealed secret video:</p>
+    <div class = "make_none summary"  id = "summary">
         <div class=vid>
-            <video width="128" height="128" controls>
+            <p>Here is the hidden secret to send</p>
+            <video controls>
+                <source src="{{ url_for('static', filename=hidden) }}">
+            </video>
+            <!-- <form action="/compute" method=post>
+                <input type="submit" name="compute" value="Hide Video"/>
+            </form> -->
+        </div>
+        <div class=vid>
+            <p>Here is the revealed secret video:</p>
+            <video controls>
                 <source src="{{ url_for('static', filename=revealed) }}">
             </video>
         </div>
+        <div class = "vid" >
+            <p>Here's the secret</p>
+            <video controls>
+                <source src="{{ url_for('static', filename=secret) }}">
+            </video>
+        </div>
+        <div class=vid>
+            <p>Here's the cover</p>
+            <video controls>
+                <source src="{{ url_for('static', filename=cover) }}">
+            </video>
+        </div>
+
     </div>
+
     <div class=section id=combined>
         <p>Here are all the above videos synchronized:</p>
         <p>(Top-left is the secret, top-right is the cover, bottom-left is the hidden message, bottom-right is the revealed message)</p>
@@ -63,5 +94,7 @@
             </video>
         </div>
     </div>
+
+    <script src="{{ url_for('static', filename='steganography.js') }}" ></script>
 </body>
 </html>

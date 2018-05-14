@@ -3,48 +3,88 @@
 <head>
     <title>Neural Steganography</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='viv_style.css') }}"/>
+    <!-- <link rel="stylesheet" href="viv_style.css"/> -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet"/>
+
 </head>
 <body>
-    <header>
-        <div class=title>
-            <h1>Neural Steganography: Picture-in-Picture</h1><br>
-            <p1>Choose an image to hide, as well as an image to hide it in. </p1>
+    <header class = "header">
+        <div class = "neural">
+            <h1>Neural Steganography <br>
+                <span>Picture-in-Picture</span>
+            </h1>
+            <!-- <p1>Choose an image to hide, as well as an image to hide it in. </p1> -->
         </div>
-        <div class=tabs>
+        <div class = "tabs">
             <a class=link href="{{ url_for('get_viv') }}">Video-In-Video</a>
-            <a class=link href="{{ url_for('get_pip') }}">Picture-In-Picture</a>
         </div>
     </header>
-    <div class=section id=inputs>
-        <div class=vid>
-            <p>Choose a secret to send:</p>
-            <img width="128" height="128" src="{{ url_for('static', filename=secret) }}"/><br>
+    <div class = "element" id = "secret_to_send">
+
+        <div class = "vid">
+            <p>Choose a secret to send</p>
+            <img src="{{ url_for('static', filename=secret) }}"/>
             <form action="/select_image" method=post>
-	        <input type="text" name="secret" placeholder="Integer [1-54]">
-	    </form>
+	            <input type="text" name="secret" placeholder="Integer [1-54]">
+	        </form>
         </div>
+    </div>
+
+    <div class = "navs">
+        <button class="btn btn-primary left" id = "left" type="submit">
+            <span class="glyphicon glyphicon-arrow-left"></span>
+        </button>
+        <button class="btn btn-primary right" id = "right" type="submit">
+            <span class="glyphicon glyphicon-arrow-right"></span>
+        </button>
+    </div>
+
+
+    <div class = "make_none cover element" id = "cover">
         <div class=vid>
-            <p>Choose a cover to hide the secret in:</p>
-            <img width="128" height="128" src="{{ url_for('static', filename=cover) }}"/><br>
-	    <form action="/select_image" method=post>
+            <p>Choose a cover to hide the secret in</p>
+            <img src="{{ url_for('static', filename=cover) }}"/>
+	        <form action="/select_image" method=post>
                 <input type="text" name="cover" placeholder="Integer [1-54]">
              </form>
-	 </div>
+	    </div>
     </div>
-    <div class=section id=hidden>
+
+    <div class = "make_none summary"  id = "summary">
         <div class=vid>
-	    <form action="/compute_image" method=post>
+	    <!-- <form action="/compute_image" method=post></form>
 		<input type="submit" name="compute" value="Hide Image"/>
-	    </form>
+	    </form> -->
             <p>Here is the hidden secret to send:</p>
-            <img width="128" height="128" src="{{ url_for('static', filename=hidden) }}"/><br>
+            <img src="{{ url_for('static', filename=hidden) }}"/><br>
         </div>
-    </div>
-    <div class=section id=revealed>
-        <p>Here is the revealed secret:</p>
+
+        <div class = "vid">
+            <p>Here is the revealed secret:</p>
+            <div class=vid>
+                <img src="{{ url_for('static', filename=revealed) }}"/><br>
+            </div>
+        </div>
+
+        <div class = "vid">
+                <p>Here's the secret</p>
+            <div>
+                <img src="{{ url_for('static', filename=secret) }}"/>
+            </div>
+        </div>
+
+
         <div class=vid>
-            <img width="128" height="128" src="{{ url_for('static', filename=revealed) }}"/><br>
+            <p>Here's the cover</p>
+            <div>
+                <img src="{{ url_for('static', filename=cover) }}"/>
+            </div>
         </div>
+
+
     </div>
+
+    <!-- <script src = "steganography.js"></script> -->
+    <script src="{{ url_for('static', filename='steganography.js') }}" ></script>
 </body>
 </html>
