@@ -1,12 +1,13 @@
 # lib
 import numpy as np
 from dataclasses import dataclass
-from keras.models import Sequential
+from keras.models import Model
 from keras.layers import (
     Input,
     Dense,
-    Merge
+    Concatenate
 )
+from keras.optimizers import Adam
 
 # self
 from models.adversarial.eve import Eve, AdversarialGame
@@ -30,21 +31,27 @@ class DES_ECB(Eve):
 
     def initialize_model(self):
 
-        plaintext = Sequential()
-        plaintext.add(Dense(64, activation='relu', input_shape=(self.message_length,)))
+        message_input = Input(shape=(self.message_length,), name='message_input')
+        possible_ciphertext_input = Input(shape=(self.message_length,), name='possible_ciphertext_input')
 
-        ciphertext = Sequential()
-        ciphertext.add(Dense(64, activation='relu', input_shape=(self.message_length,)))
+        m = Dense(1024, activation='tanh')(message_input)
+        m = Dense(512, activation='tanh')(m)
+        m = Dense(128, activation='tanh')(m)
 
-        merged = Merge([plaintext, ciphertext], mode='concat')
+        c = Dense(1024, activation='tanh')(possible_ciphertext_input)
+        c = Dense(512, activation='tanh')(c)
+        c = Dense(128, activation='tanh')(c)
 
-        model = Sequential()
-        model.add(merged)
-        model.add(Dense(128, activation='relu'))
-        model.add(Dense(128, activation='relu'))
-        model.add(Dense(128, activation='relu'))
-        model.add(Dense(1, activation='sigmoid'))
+        merge = Concatenate()([m, c])
+        f = Dense(4096, activation='tanh')(merge)
+        f = Dense(1024, activation='tanh')(f)
+        f = Dense(1, activation='sigmoid')(f)
+
+        model = Model(inputs=[message_input, possible_ciphertext_input], outputs=f)
         model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])
+
+        if self.verbose > 0:
+            model.summary()
 
         self.model = model
 

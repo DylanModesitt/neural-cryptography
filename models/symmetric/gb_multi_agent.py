@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 
 # lib
+import keras.backend as K
 from keras.models import Model
 from keras.layers import (
     Input,
@@ -83,7 +84,10 @@ class MultiAgentDecryption(NeuralCryptographyModel):
             if 'alice' in layer.name:
                 layer.trainable = False
 
-        eve.compile(optimizer=Adam(lr=0.0008), loss=mean_absolute_error)
+        def decryption_accuracy(y_true, y_pred):
+            return K.mean(K.equal(y_true, K.round(y_pred)), axis=-1)
+
+        eve.compile(optimizer=Adam(lr=0.0008), loss=mean_absolute_error, metrics=[decryption_accuracy])
 
         def eve_loss_for_bob(y_true, y_pred):
             return (1. - mean_absolute_error(y_true, y_pred))**2
@@ -97,7 +101,7 @@ class MultiAgentDecryption(NeuralCryptographyModel):
             if 'eve' in layer.name:
                 layer.trainable = False
 
-        bob.compile(optimizer=Adam(lr=0.0008), loss=[mean_absolute_error, eve_loss_for_bob])
+        bob.compile(optimizer=Adam(lr=0.0008), loss=[mean_absolute_error, eve_loss_for_bob], metrics=[decryption_accuracy])
 
         self.bob = bob
         self.eve = eve
@@ -116,7 +120,7 @@ class MultiAgentDecryption(NeuralCryptographyModel):
 
     def __call__(self,
                  epochs=50,
-                 bob_prefit_epochs=10,
+                 bob_prefit_epochs=0,
                  eve_postfit_epochs=50,
                  eve_minibatch_multiplier=2,
                  iterations_per_epoch=100,
@@ -222,6 +226,10 @@ class MultiAgentDecryption(NeuralCryptographyModel):
 if __name__ == '__main__':
 
     model = MultiAgentDecryption(verbose=1)
-    history = model()
+    history = model(bob_prefit_epochs=0)
     model.visualize()
+    model.visualize(metrics_to_mix=[('bob_flatten_decryption_accuracy', 'decryption_accuracy')],
+                    sub_directory='together')
+
+
 

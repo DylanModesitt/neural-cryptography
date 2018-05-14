@@ -1,6 +1,7 @@
 # system
 from enum import Enum
 from abc import ABC, abstractmethod
+from typing import Tuple
 
 # lib
 import numpy as np
@@ -68,7 +69,8 @@ class GAN(NeuralCryptographyModel, ABC):
     key_length: int = 16
     discrimination_mode: DiscriminatorGame = DiscriminatorGame.DetectEncryption
 
-    discriminator_real_label = 0
+    discriminator_real_label: int = 0
+    generator_loss_weights: Tuple[int] = (1, 1)
 
     def initialize_model(self):
         """

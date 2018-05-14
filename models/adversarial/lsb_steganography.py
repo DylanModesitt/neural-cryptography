@@ -61,7 +61,7 @@ class LsbDetection(Eve):
         censor = Dense(1, activation='sigmoid')(censor)
 
         model = Model(inputs=censorship_input, outputs=censor)
-        model.compile(optimizer=Adam(), loss='mae', metrics=['acc'])
+        model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=['acc'])
 
         if self.verbose > 0:
             model.summary()

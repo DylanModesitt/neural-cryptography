@@ -164,7 +164,7 @@ class NeuralCryptographyModel(ABC):
                 agents = self.history[metric]
                 for agent, scores in agents.items():
                     plt.plot(scores)
-                    legend.append(agent + ' ' + metric)
+                    legend.append(agent)
 
                 metric_set_name = metric_set[0]
                 metric_set_name.replace('val_', '')
@@ -172,7 +172,9 @@ class NeuralCryptographyModel(ABC):
             plt.title('model ' + metric_set_name)
             plt.ylabel(metric_set_name)
             plt.xlabel('epoch')
-            plt.legend(legend, loc='upper right')
+            loc = 'upper right'
+            plt.legend(legend, loc=loc)
+
             plt.savefig(os.path.join(visualization_dir, ','.join(metric_set) + '.png'))
             plt.clf()
 

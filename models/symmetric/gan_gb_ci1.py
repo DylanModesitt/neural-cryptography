@@ -6,6 +6,9 @@ import keras.backend as K
 from dataclasses import dataclass
 from keras.layers import (
     Dense,
+    Conv1D,
+    Concatenate,
+    Reshape,
     Flatten
 )
 
@@ -34,16 +37,26 @@ class EncryptionDetectionGAN(GAN):
 
     This game is somewhat based on the CPA game.
     """
-    alice_bitwise_latent_dims: Sequence[int] = (24, 1)
-    bob_bitwise_latent_dims: Sequence[int] = (24, 1)
-    alice_share_bitwise_weights: bool = False
-    bob_share_bitwise_weights: bool = False
+    alice_bitwise_latent_dims: Sequence[int] = (12, 1)
+    bob_bitwise_latent_dims: Sequence[int] = (12, 1)
+    alice_share_bitwise_weights: bool = True
+    bob_share_bitwise_weights: bool = True
 
-    tie_alice_and_bob = False
+    tie_alice_and_bob = True
 
     eve_bitwise_latent_dims: Sequence[int] = (32, 8, 1)
     eve_latent_dim: Sequence[int] = (32,)
     eve_share_bitwise_weights: bool = False
+
+    @staticmethod
+    def cryptography_convolution(layer, name):
+
+        l = Conv1D(2, kernel_size=4, strides=1, activation=relu, padding='same', name=name + '_conv1')(layer)
+        l = Conv1D(4, kernel_size=2, strides=2, activation=relu, padding='same', name=name + '_conv2')(l)
+        l = Conv1D(4, kernel_size=1, strides=1, activation=relu, padding='same', name=name + '_conv3')(l)
+        l = Conv1D(1, kernel_size=1, strides=1, activation=tanh, padding='same', name=name + '_conv4')(l)
+        f = Flatten(name=name + '_flatten')(l)
+        return f
 
     def initialize_discriminator(self, *inputs):
 
@@ -54,29 +67,10 @@ class EncryptionDetectionGAN(GAN):
         message_input = inputs[0]
         possible_ciphertext_input = inputs[1]
 
-        bitwise_function = Flatten()(
-            ElementWise(
-                self.eve_bitwise_latent_dims,
-                activation='tanh',
-                share_element_weights=self.eve_share_bitwise_weights)([message_input,
-                                                                       possible_ciphertext_input])
-        )
-
-        dense = Dense(
-            self.eve_latent_dim[0],
-            activation='relu'
-        )(bitwise_function)
-
-        for units in self.eve_latent_dim[1:]:
-            dense = Dense(
-                units,
-                activation='relu'
-            )(dense)
-
-        pred = Dense(
-            1,
-            activation='sigmoid'
-        )(dense)
+        alice_input = Concatenate()([key_input, message_input])
+        alice_l = Dense(self.n, activation='sigmoid', name='alice_dense')(alice_input)
+        alice_l = Reshape((-1, 1), name='alice_reshape')(alice_l)
+        ciphertext = self.cryptography_convolution(alice_l, 'alice')
 
         model = Model(inputs=inputs, outputs=pred)
         model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=['acc'])
@@ -116,7 +110,7 @@ class EncryptionDetectionGAN(GAN):
 
         else:
 
-            alice_encryption = Flatten(name='alice_encryption')(
+            alice_encryption = Flatten(name='decryption')(
                 ElementWise(self.bob_bitwise_latent_dims, activation='tanh',
                             share_element_weights=self.bob_share_bitwise_weights)([
                     message_input,
@@ -124,7 +118,7 @@ class EncryptionDetectionGAN(GAN):
                 ]),
             )
 
-            bob_decryption = Flatten(name='bob_decryption')(
+            bob_decryption = Flatten(name='decryption')(
                 ElementWise(self.bob_bitwise_latent_dims, activation='tanh',
                             share_element_weights=self.bob_share_bitwise_weights)([
                     alice_encryption,
@@ -134,18 +128,17 @@ class EncryptionDetectionGAN(GAN):
 
         eves_opinion = discriminator([message_input, alice_encryption])
 
+        def decryption_accuracy(y_true, y_pred):
+            return K.mean(K.equal(y_true, K.round(y_pred)), axis=-1)
+
         alice = Model(inputs=inputs, outputs=alice_encryption)
         alice_bob = Model(inputs=inputs, outputs=[bob_decryption, eves_opinion])
 
         def discriminator_loss(y_true, y_pred):
             return K.abs(0.5 - K.mean(y_pred))
 
-        def decryption_accuracy(y_true, y_pred):
-            return K.mean(K.equal(y_true, K.round(y_pred)), axis=-1)
-
         alice_bob.compile(optimizer=Adam(),
                           loss=[mean_absolute_error, binary_crossentropy],
-                          loss_weights=list(self.generator_loss_weights),
                           metrics=[decryption_accuracy])
 
         return alice_bob, alice
@@ -160,8 +153,8 @@ if __name__ == '__main__':
     model = EncryptionDetectionGAN(alice_share_bitwise_weights=True,
                                    bob_share_bitwise_weights=True)
 
-    model(generator_prefit_epochs=0,
-          epochs=30,
+    model(generator_prefit_epochs=2,
+          epochs=15,
           generator_minbatch_multiplier=2,
           discriminator_postfit_epochs=10)
 
