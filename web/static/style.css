@@ -1,21 +1,111 @@
 *{
-    margin: 0;
+    /* margin: 0; */
     padding: 0;
+
+
+}
+
+body {
+    display: grid;
+    grid-template-rows: 20% 70% 10%;
+
 }
 
 header {
-    padding: 10px 10px 10px 10px;
-    background-color: lightgrey;
+    display: flex;
+    justify-content: center;
+    /* padding: 10px 10px 10px 10px;
+    background-color: lightgrey; */
 }
 
+.header {
+    display: flex;
+    border-bottom: 1px solid #337ab7;
+    font-size: 50px;
+    padding-bottom: 20px;
+}
+
+.neural {
+    font-size: 50px;
+}
+
+.navs {
+    grid-row: 3/4;
+    display: grid;
+    grid-template-columns: repeat(2, 50%);
+    grid-gap: 5px;
+}
+
+.left {
+
+
+}
+
+.right {
+
+}
+
+.summary {
+    display: grid;
+    grid-template-columns: 50% 50%;
+    grid-template-rows: 50% 50%;
+    grid-gap: 10px;
+    font-family: Helvetica;
+    font-size: 20px;
+}
+video {
+    width: 100%;
+}
+span {
+    font-style: italic;
+    font-size: 23px;
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 10px;
+}
+
+
+
+.element {
+    grid-row: 2/3;
+    display: flex;
+    justify-content: center;
+    font-family: Helvetica;
+    font-size: 20px;
+    padding-right: 60px;
+}
+
+.make_none {
+    display: none;
+
+}
+
+
+/* .inputs {
+    grid-row: 2/3;
+} */
+
+.form {
+    width: 300px;
+    display: inline-block;
+    text-align: center;
+    margin: auto
+}
+
+.hidden {
+    grid-row: 3/4;
+    display: none;
+}
+
+
 div.section {
+    display: none;
     text-align: center;
     align: center;
-    padding: 30px 30px 30px 30px;
+    /* padding: 30px 30px 30px 30px; */
 }
 
 div.vid {
-    display: inline-block;
     padding: 20px 20px 20px 20px;
 }
 
@@ -29,18 +119,13 @@ p {
 }
 
 
-#inputs {
-    border-top: 1px black;
-}
+
 
 #hidden {
     border-top: 1px black;
     background-color: lightgrey;
 }
 
-#revealed {
-    border-top: 1px black;
-}
 
 #combined {
     border-top: 1px black;
