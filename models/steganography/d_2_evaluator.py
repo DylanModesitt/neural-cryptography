@@ -25,7 +25,7 @@ class SteganographyImageCoverWrapper:
 
         self.model = steg_2d_model
         self.images = load_images(path=image_dir,
-                                  scale=steg_2d_model.image_scale)
+                                  scale=steg_2d_model.cover_scale)
 
     def hide_array(self, secret_array, cover_array):
         return self.model.hide_array(np.array(cover_array), np.array(secret_array))
@@ -79,7 +79,7 @@ class SteganographyImageCoverWrapper:
 
         return self.hide_in_image_cover(bits, cover)
 
-    def hide_str_in_random_image_cover(self, s):
+    def hide_str_in_random_image_cover(self, s, return_cover=True):
 
         bits = bits_from_string(s)
         desired_len = self.model.cover_height * self.model.cover_width * self.model.secret_channels
@@ -91,7 +91,7 @@ class SteganographyImageCoverWrapper:
         bits = np.array(bits)
         bits = bits.reshape((self.model.cover_height, self.model.cover_width, self.model.secret_channels))
 
-        return self.hide_in_random_image_cover(bits)
+        return self.hide_in_random_image_cover(bits, return_cover=return_cover)
 
     def decode_image_in_cover(self, cover):
         secret = self.model.reveal(cover)
@@ -103,15 +103,45 @@ class SteganographyImageCoverWrapper:
         return string_from_bits(list(secret.flatten().astype(bool).astype(int)))
 
 
-if __name__ == '__main__':
 
-    model = Steganography2D(secret_channels=1, dir='')
+def text_in_img_example():
+
+    model = Steganography2D(secret_channels=1, dir='bin/text-in-image32x32')
+    model.load()
+
     wrapper = SteganographyImageCoverWrapper(model)
 
-    hidden_secret = wrapper.hide_str_in_random_image_cover('hi')
+    hidden_secret, cover = wrapper.hide_str_in_random_image_cover('hi how are you today ? ')
+    print(hidden_secret)
     resulting_str = wrapper.decode_str_in_cover(hidden_secret)
 
     print('resulting str:', resulting_str)
-    hidden_secret = array_to_img(hidden_secret)
+    hidden_secret, cover = array_to_img(hidden_secret), array_to_img(cover)
+    hidden_secret.show()
+    cover.show()
+
+
+def image_in_image_example():
+
+    model = Steganography2D(secret_channels=3, dir='bin/image-in-image32x32')
+    model.load()
+
+    wrapper = SteganographyImageCoverWrapper(model)
+    hidden_secret, cover, secret = wrapper.hide_image_in_image()
+    revealed_secret = array_to_img(wrapper.decode_image_in_cover(hidden_secret))
+
+    hidden_secret, cover, secret = array_to_img(hidden_secret), array_to_img(cover), array_to_img(secret)
+
+    hidden_secret.show()
+    cover.show()
+    secret.show()
+    revealed_secret.show()
+
+if __name__ == '__main__':
+
+    image_in_image_example()
+
+
+
 
 
