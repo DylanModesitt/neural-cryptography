@@ -269,7 +269,6 @@ class Steganography2D(NeuralCryptographyModel):
         hidden_secret = self.hiding_model.predict([cover, secret])
         return np.divide(hidden_secret, self.image_scale)
 
-
     def hide(self, cover, secret):
 
         if cover.shape[0] != self.cover_height or cover.shape[1] != self.cover_width \
@@ -301,7 +300,6 @@ class Steganography2D(NeuralCryptographyModel):
         secret = self.revealing_model.predict(hidden_secret)
 
         return secret
-
 
     def reveal(self, hidden_secret):
 
@@ -435,6 +433,7 @@ class Steganography2D(NeuralCryptographyModel):
 if __name__ == '__main__':
 
     model = Steganography2D(secret_channels=1,)
+    
     model(censorship_discriminator_epochs=0,
           prefit_decryptionn_epochs=0,
           adversarial_epochs=0,
