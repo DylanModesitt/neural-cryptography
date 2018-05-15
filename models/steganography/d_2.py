@@ -252,6 +252,24 @@ class Steganography2D(NeuralCryptographyModel):
 
         return [self.adversarial_model]
 
+    def hide_array(self, cover, secret):
+
+        if cover.shape[1] != self.cover_height or cover.shape[2] != self.cover_width \
+                or cover.shape[3] != self.cover_channels:
+
+            raise ValueError('expected secret to be of shape [ ?, %s, %s, %s] ' %
+                             (self.cover_height, self.cover_width, self.secret_channels))
+
+        if secret.shape[1] != self.cover_height or secret.shape[2] != self.cover_width \
+                or secret.shape[3] != self.secret_channels:
+
+            raise ValueError('expected secret to be of shape [ ?, %s, %s, %s] ' %
+                             (self.cover_height, self.cover_width, self.secret_channels))
+
+        hidden_secret = self.hiding_model.predict([cover, secret])
+        return np.divide(hidden_secret, self.image_scale)
+
+
     def hide(self, cover, secret):
 
         if cover.shape[0] != self.cover_height or cover.shape[1] != self.cover_width \
@@ -270,7 +288,20 @@ class Steganography2D(NeuralCryptographyModel):
         cover = np.array([cover])
 
         hidden_secret = self.hiding_model.predict([cover, secret])[0]
-        return hidden_secret / self.image_scale
+        return np.divide(hidden_secret, self.image_scale)
+
+    def reveal_array(self, hidden_secret):
+        if hidden_secret.shape[1] != self.cover_height or hidden_secret.shape[2] != self.cover_width \
+                or hidden_secret.shape[3] != self.cover_channels:
+
+            raise ValueError('expected hidden to be of shape [ ?, %s, %s, %s] ' %
+                             (self.cover_height, self.cover_width, self.secret_channels))
+
+        hidden_secret = np.multiply(hidden_secret, self.image_scale)
+        secret = self.revealing_model.predict(hidden_secret)
+
+        return secret
+
 
     def reveal(self, hidden_secret):
 
