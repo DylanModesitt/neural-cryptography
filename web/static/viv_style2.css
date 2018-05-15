@@ -1,21 +1,45 @@
-/* Remove the navbar's default margin-bottom and rounded borders */
-    .navbar {
-      margin-bottom: 0;
-      border-radius: 0;
-    }
+.navbar {
+  margin-bottom: 0;
+  border-radius: 0;
+}
 
-    /* Add a gray background color and some padding to the footer */
-    footer {
-      background-color: #f2f2f2;
-      padding: 25px;
-    }
-    .navbar-inverse .navbar-brand:hover,
-    .navbar-inverse .navbar-brand:focus {
-      background-color: transparent;
-      color: #ededed;
-    }
-    .navbar-inverse .navbar-brand {
-    color: #ededed;
-    }
 
-    
+/* Add a gray background color and some padding to the footer */
+footer {
+  background-color: #f2f2f2;
+  color: #000;
+  padding-top: 24px;
+  bottom: 0;
+  position: absolute;
+  height: 60px;
+  line-height: 60px;
+}
+.navbar-inverse .navbar-brand:hover,
+.navbar-inverse .navbar-brand:focus {
+  background-color: transparent;
+  color: #ededed;
+}
+.navbar-inverse .navbar-brand {
+color: #ededed;
+}
+
+
+#customFile .custom-file-control:lang(en)::after {
+  content: "Select file...";
+}
+
+#customFile .custom-file-control:lang(en)::before {
+  content: "Click me";
+}
+
+/*when a value is selected, this class removes the content */
+.custom-file-control.selected:lang(en)::after {
+  content: "" !important;
+}
+
+.custom-file {
+  overflow: hidden;
+}
+.custom-file-control {
+  white-space: nowrap;
+}

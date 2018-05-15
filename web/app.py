@@ -16,7 +16,7 @@ from models.steganography.d_2 import Steganography2D
 from models.steganography.d_2_evaluator import *
 
 # ===== flask init ==============================
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static/')
 
 # ===== self init ===============================
 model = Steganography2D(dir='./bin/2018-05-03_13:02__61857339')
