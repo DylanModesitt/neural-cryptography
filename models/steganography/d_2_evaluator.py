@@ -35,6 +35,12 @@ class SteganographyImageCoverWrapper:
     def reveal_array(self, hidden_array):
         return self.model.reveal_array(hidden_array)
 
+    def hide_in_image_cover(self, secret, cover):
+
+        hidden_secret = self.model.hide(cover, secret)
+
+        return hidden_secret
+
     def hide_in_random_image_cover(self, secret, return_cover=True):
 
         idx = np.random.randint(0, len(self.images))
@@ -61,6 +67,20 @@ class SteganographyImageCoverWrapper:
 
         return hidden_secret
 
+    def hide_str_in_image_cover(self, s, cover):
+
+        bits = bits_from_string(s)
+        desired_len = self.model.cover_height * self.model.cover_width * self.model.secret_channels
+
+        if len(bits) < desired_len:
+            bits += list(np.random.randint(0, 2, size=(desired_len - len(bits),)))
+
+        bits = bits[:desired_len]
+        bits = np.array(bits)
+        bits = bits.reshape((self.model.cover_height, self.model.cover_width, self.model.secret_channels))
+
+        return self.hide_in_image_cover(bits, cover)
+
     def hide_str_in_random_image_cover(self, s):
 
         bits = bits_from_string(s)
@@ -82,8 +102,7 @@ class SteganographyImageCoverWrapper:
     def decode_str_in_cover(self, cover):
 
         secret = np.round(self.model.reveal(cover))
-        print(list(secret.flatten().astype(int)))
-        return string_from_bits(list(secret.flatten().astype(int)))
+        return string_from_bits(list(secret.flatten().astype(bool).astype(int)))
 
 def video_to_frames(directory, filename, frame_size=32):
     print("Converting video " + filename + " to frames")
@@ -135,9 +154,9 @@ def video_to_frames(directory, filename, frame_size=32):
 
     return center_location, scaled_location
 
-def video_in_video(helper, secret_num, cover_num, request_num):
-    secret_path = "./data/scaled_video_frames/" + str(secret_num)
-    cover_path = "./data/scaled_video_frames/" + str(cover_num)
+def video_in_video(helper, secret_path, cover_path, request_num):
+#    secret_path = ".web/static/" + secret#"./data/scaled_video_frames/" + str(secret_num)
+ #   cover_path = ".web/static/" + cover#"./data/scaled_video_frames/" + str(cover_num)
     covers = load_images(path=cover_path, scale=helper.model.image_scale)
     secrets = load_images(path=secret_path, scale=helper.model.image_scale)
 
@@ -179,29 +198,27 @@ def video_in_video(helper, secret_num, cover_num, request_num):
         frame = frame[:,:,::-1]
         combined_vid.write(frame)
 
-def picture_in_picture(helper, secret_num, cover_num, request_num):
-    cover = load_image(cover_num)
-    secret = load_image(secret_num)
+def picture_in_picture(helper, secret, cover, request_num):
+    cover, secret = np.array(cover), np.array(secret)
 
     hidden_secret = helper.hide_array([secret], [cover])
     revealed_secret = array_to_img(helper.decode_image_in_cover(hidden_secret[0]))
     hidden_secret, cover, secret = array_to_img(hidden_secret[0]), array_to_img(cover), array_to_img(secret)
 
-    cover.save('./web/static/data/image_output/cover.png', 'PNG')
-    secret.save('./web/static/data/image_output/secret.png', 'PNG')
-    hidden_secret.save('./web/static/data/image_output/hidden' + str(request_num)  + '.png', 'PNG')
+    hidden_secret.save('./web/static/data/image_output/hidden' + str(request_num) + '.png', 'PNG')
     revealed_secret.save('./web/static/data/image_output/revealed' + str(request_num)  + '.png', 'PNG')
 
+def text_in_picture(helper, string, cover, request_num):
+    cover = np.array(cover)
+    hidden_secret = helper.hide_str_in_image_cover(string, cover)
+    revealed_secret = helper.decode_str_in_cover(hidden_secret)
+    hidden_secret, cover = array_to_img(hidden_secret), array_to_img(cover)
+    hidden_secret.save('./web/static/data/image_output/hidden' + str(request_num) + '.png', 'PNG')
+    return revealed_secret
 
-#if __name__ == '__main__':
-#    model = Steganography2D(dir='./bin/2018-05-03_13:02__61857339')
-#    model.load()
-
-#    helper = SteganographyImageCoverWrapper(model)
-
-#    path = './data/videos/'
-#    for file in os.listdir(path):
-#        _ , _ = video_to_frames(path, file, frame_size=32)
-    #video_in_video(helper)
-#    video_in_video(helper, 1, 2, 0)
-
+"""
+model = Steganography2D(dir='./bin/2018-05-03_13:02__61857339')
+model.load()
+helper = SteganographyImageCoverWrapper(model)
+secret, cover = helper.hide_str_in_random_image_cover("You a broke lad, innit?")
+print(helper.decode_str_in_cover(cover)) """

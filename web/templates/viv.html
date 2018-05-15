@@ -13,6 +13,7 @@
         <div class=tabs>
             <a class=link href="{{ url_for('get_viv') }}">Video-In-Video</a>
             <a class=link href="{{ url_for('get_pip') }}">Picture-In-Picture</a>
+            <a class=link href="{{ url_for('get_tip') }}">Text-In-Picture</a>
         </div>
     </header>
     <div class=section id=inputs>
@@ -21,8 +22,8 @@
             <video width="128" height="128" controls>
                 <source src="{{ url_for('static', filename=secret) }}">
             </video><br>
-            <form action="/select_video" method=post>
-	        <input type="text" name="secret" placeholder="Integer [1-54]">
+            <form action="/select_video" enctype="multipart/form-data" method=post>
+	        <input type="file" name="secret" onchange="form.submit()" />
 	    </form>
         </div>
         <div class=vid>
@@ -30,8 +31,8 @@
             <video width="128" height="128" controls>
                 <source src="{{ url_for('static', filename=cover) }}">
             </video><br>
-	    <form action="/select_video" method=post>
-                <input type="text" name="cover" placeholder="Integer [1-54]">
+	    <form action="/select_video" enctype="multipart/form-data" method=post>
+                <input type="file" name="cover" onchange="form.submit()" />
              </form>
 	 </div>
     </div>

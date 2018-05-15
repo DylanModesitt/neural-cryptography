@@ -7,8 +7,8 @@
 <body>
     <header>
         <div class=title>
-            <h1>Neural Steganography: Picture-in-Picture</h1><br>
-            <p1>Choose an image to hide, as well as an image to hide it in. </p1>
+            <h1>Neural Steganography: Text-in-Picture</h1><br>
+            <p1>Choose a string to hide, as well as an image to hide it in. </p1>
         </div>
         <div class=tabs>
             <a class=link href="{{ url_for('get_viv') }}">Video-In-Video</a>
@@ -18,24 +18,25 @@
     </header>
     <div class=section id=inputs>
         <div class=vid>
-            <p>Choose a secret to send:</p>
-            <img width="128" height="128" src="{{ url_for('static', filename=secret) }}"/><br>
-            <form action="/select_image"  enctype="multipart/form-data" method="post">
-                <input name="secret" type="file" onchange="form.submit()" />
+            <p>Choose a secret to send:</p><br>
+	    <p>Processed text: {{ secret }} </p><br>
+            <form action="/select_text" method="post">
+                <input name="secret" type="text" />
+		<input type="submit" />
             </form>
         </div>
         <div class=vid>
             <p>Choose a cover to hide the secret in:</p>
             <img width="128" height="128" src="{{ url_for('static', filename=cover) }}"/><br>
-            <form action="/select_image"  enctype="multipart/form-data" method="post">
+            <form action="/select_image_tip"  enctype="multipart/form-data" method="post">
                 <input name="cover" type="file" onchange="form.submit()"/>
             </form>
 	 </div>
     </div>
     <div class=section id=hidden>
         <div class=vid>
-	    <form action="/compute_image" method=post>
-		<input type="submit" name="compute" value="Hide Image"/>
+	    <form action="/compute_text" method=post>
+		<input type="submit" name="compute" value="Hide Text"/>
 	    </form>
             <p>Here is the hidden secret to send:</p>
             <img width="128" height="128" src="{{ url_for('static', filename=hidden) }}"/><br>
@@ -43,9 +44,7 @@
     </div>
     <div class=section id=revealed>
         <p>Here is the revealed secret:</p>
-        <div class=vid>
-            <img width="128" height="128" src="{{ url_for('static', filename=revealed) }}"/><br>
-        </div>
+        <p> {{ revealed }}
     </div>
 </body>
 </html>
