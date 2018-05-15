@@ -70,7 +70,7 @@ class GAN(NeuralCryptographyModel, ABC):
     discrimination_mode: DiscriminatorGame = DiscriminatorGame.DetectEncryption
 
     discriminator_real_label: int = 0
-    generator_loss_weights: Tuple[int] = (1, 1)
+    generator_loss_weights: Tuple[int] = (125, 1, 0.75)
 
     def initialize_model(self):
         """
@@ -102,11 +102,12 @@ class GAN(NeuralCryptographyModel, ABC):
         # the discriminator should now be compiled. Thus, we can freeze
         # it and give it to the generator initialization.
 
+        self.discriminator = discriminator
+
         frozen_discriminator = discriminator
         for layer in frozen_discriminator.layers:
             layer.trainable = False
 
-        self.discriminator = discriminator
         self.generator, self.encryptor = self.initialize_generator(frozen_discriminator,
                                                                    message_input,
                                                                    key_input)
@@ -230,7 +231,12 @@ class GAN(NeuralCryptographyModel, ABC):
             results = self.encryptor.predict([msgs, keys])
             P, C, Y = replace_encryptions_with_random_entries(msgs,
                                                               results,
-                                                              real_label=self.discriminator_real_label)
+                                                              real_label=self.discriminator_real_label,
+                                                              noise=0.05)
+
+            print(P)
+            print(C)
+            print(Y)
 
             return self.discriminator.fit(
                 x=[P, C],
@@ -257,7 +263,7 @@ class GAN(NeuralCryptographyModel, ABC):
 
             return self.generator.fit(
                 x=[msgs, keys],
-                y=[msgs, real_labels],
+                y=[msgs, msgs, real_labels],
                 epochs=1,
                 batch_size=batch_size,
                 verbose=self.verbose
@@ -308,17 +314,23 @@ class GAN(NeuralCryptographyModel, ABC):
 
             print('epoch ', '{}/{}'.format(i+1, epochs))
 
-            g_history = self.fit_generator(iterations_per_epoch * generator_minbatch_multiplier,
-                                           batch_size)
-
-            g_h.append(g_history)
-
             d_history = self.fit_discriminator(iterations_per_epoch,
                                                discriminator_minbatch_multiplier * batch_size)
 
             d_h.append(d_history)
 
+            g_history = self.fit_generator(iterations_per_epoch * generator_minbatch_multiplier,
+                                           batch_size)
+
+            g_h.append(g_history)
+
             self.save()
+
+            print(self.encryptor.predict([np.array([[
+                1, 1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+            ]]),np.array([[
+                1, -1, 1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+            ]])]))
 
         for i in range(discriminator_postfit_epochs):
 

@@ -83,11 +83,17 @@ def balance_real_and_fake_samples(real, fake, real_label=0):
     return real, y
 
 
-def replace_encryptions_with_random_entries(P, C, fraction=1/2, real_label=0):
+def replace_encryptions_with_random_entries(P, C, fraction=1/2, real_label=0, noise=None):
 
     split = len(P) // (int(1/fraction))
     Y = np.ones(len(P)) if real_label == 1 else np.zeros(len(P))
+
     C[:split] = (np.random.randint(0, 2, size=(split, P.shape[1]))*2)-1
+
+    if noise is not None:
+        noise = np.abs(np.random.normal(scale=noise, size=P.shape))
+        C += noise
+
     Y[:split] = 0 if real_label == 1 else 1
 
     # re-shuffle

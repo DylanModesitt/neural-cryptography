@@ -2,11 +2,13 @@
 from typing import Sequence
 
 # lib
+import numpy as np
 import keras.backend as K
 from dataclasses import dataclass
 from keras.layers import (
     Dense,
-    Flatten
+    Flatten,
+    GaussianNoise
 )
 
 from keras.models import Model
@@ -34,12 +36,14 @@ class EncryptionDetectionGAN(GAN):
 
     This game is somewhat based on the CPA game.
     """
-    alice_bitwise_latent_dims: Sequence[int] = (10, 1)
-    bob_bitwise_latent_dims: Sequence[int] = (10, 1)
+    alice_bitwise_latent_dims: Sequence[int] = (24, 1)
+    bob_bitwise_latent_dims: Sequence[int] = (24, 1)
     alice_share_bitwise_weights: bool = True
     bob_share_bitwise_weights: bool = True
 
-    tie_alice_and_bob = False
+    tie_alice_and_bob = True
+
+    use_bias: bool = False
 
     eve_bitwise_latent_dims: Sequence[int] = (32, 8, 1)
     eve_latent_dim: Sequence[int] = (32,)
@@ -99,18 +103,20 @@ class EncryptionDetectionGAN(GAN):
 
             enc_dec = ElementWise(self.alice_bitwise_latent_dims, activation='tanh',
                                   share_element_weights=self.alice_share_bitwise_weights,
-                                  use_bias=False)
+                                  use_bias=self.use_bias)
 
-            alice_encryption = Flatten()(
+            alice_encryption = Flatten(name='encryption')(
                 enc_dec([
                     message_input,
                     key_input
                 ])
             )
 
+            modified_encryption = GaussianNoise(0.1)(alice_encryption)
+
             bob_decryption = Flatten(name='decryption')(
                 enc_dec([
-                    alice_encryption,
+                    modified_encryption,
                     key_input
                 ]),
             )
@@ -120,17 +126,19 @@ class EncryptionDetectionGAN(GAN):
             alice_encryption = Flatten(name='alice_encryption')(
                 ElementWise(self.bob_bitwise_latent_dims, activation='tanh',
                             share_element_weights=self.bob_share_bitwise_weights,
-                            use_bias=False)([
+                            use_bias=self.use_bias)([
                     message_input,
                     key_input
                 ]),
             )
 
+            modified_encryption = GaussianNoise(0.1)(alice_encryption)
+
             bob_decryption = Flatten(name='bob_decryption')(
                 ElementWise(self.bob_bitwise_latent_dims, activation='tanh',
                             share_element_weights=self.bob_share_bitwise_weights,
-                            use_bias=False)([
-                    alice_encryption,
+                            use_bias=self.use_bias)([
+                    modified_encryption,
                     key_input
                 ]),
             )
@@ -138,16 +146,21 @@ class EncryptionDetectionGAN(GAN):
         eves_opinion = discriminator([message_input, alice_encryption])
 
         alice = Model(inputs=inputs, outputs=alice_encryption)
-        alice_bob = Model(inputs=inputs, outputs=[bob_decryption, eves_opinion])
+        self.alice = alice
+        alice_bob = Model(inputs=inputs, outputs=[alice_encryption, bob_decryption, eves_opinion])
+        self.alice_bob = alice_bob
 
-        def discriminator_loss(y_true, y_pred):
-            return K.abs(0.5 - K.mean(y_pred))
+        def bit_encforcing_loss(y_true, y_pred):
+            return 1 - K.abs(y_pred)
 
         def decryption_accuracy(y_true, y_pred):
             return K.mean(K.equal(y_true, K.round(y_pred)), axis=-1)
 
+        def indistinguishable_loss(y_true, y_pred):
+            return K.abs(0.5 - K.mean(y_pred))
+
         alice_bob.compile(optimizer=Adam(),
-                          loss=[mean_absolute_error, binary_crossentropy],
+                          loss=[bit_encforcing_loss, mean_absolute_error, binary_crossentropy],
                           loss_weights=list(self.generator_loss_weights),
                           metrics=[decryption_accuracy])
 
@@ -158,7 +171,24 @@ class EncryptionDetectionGAN(GAN):
         return [DiscriminatorGame.DetectEncryption]
 
 
+def trial():
+
+    model = EncryptionDetectionGAN(dir='./bin/gan_ci1_sucess1')
+    model.load()
+
+    # -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+    # 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+
+    print(model.alice.predict([np.array([[
+        1, 1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+    ]]),np.array([[
+        1, -1, 1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+    ]])]))
+
+
 if __name__ == '__main__':
+
+    # trial()
 
     model = EncryptionDetectionGAN(alice_share_bitwise_weights=True,
                                    bob_share_bitwise_weights=True)
