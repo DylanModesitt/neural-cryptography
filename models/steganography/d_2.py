@@ -319,7 +319,7 @@ class Steganography2D(NeuralCryptographyModel):
 
             self.print('epoch [ %s / %s]' % (i+1, steganography_epochs))
             self.print('>> generating data')
-            covers, secrets = load_image_covers_and_image_secrets(iterations_per_epoch*batch_size)
+            covers, secrets = load_image_covers_and_random_bit_secrets(iterations_per_epoch*batch_size)
 
             self.print('>> fitting')
             steganography_history = self.steganography_model.fit(
@@ -403,7 +403,7 @@ class Steganography2D(NeuralCryptographyModel):
 
 if __name__ == '__main__':
 
-    model = Steganography2D()
+    model = Steganography2D(secret_channels=1,)
     model(censorship_discriminator_epochs=0,
           prefit_decryptionn_epochs=0,
           adversarial_epochs=0,

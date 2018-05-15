@@ -8,7 +8,11 @@ from dataclasses import dataclass
 from keras.layers import (
     Dense,
     Flatten,
-    GaussianNoise
+    GaussianNoise,
+    LocallyConnected1D,
+    PReLU,
+    Add,
+    Lambda,
 )
 
 from keras.models import Model
@@ -36,14 +40,14 @@ class EncryptionDetectionGAN(GAN):
 
     This game is somewhat based on the CPA game.
     """
-    alice_bitwise_latent_dims: Sequence[int] = (24, 1)
-    bob_bitwise_latent_dims: Sequence[int] = (24, 1)
-    alice_share_bitwise_weights: bool = True
-    bob_share_bitwise_weights: bool = True
+    alice_bitwise_latent_dims: Sequence[int] = (12, 1)
+    bob_bitwise_latent_dims: Sequence[int] = (12, 1)
+    alice_share_bitwise_weights: bool = False
+    bob_share_bitwise_weights: bool = False
 
-    tie_alice_and_bob = True
+    tie_alice_and_bob = False
 
-    use_bias: bool = False
+    use_bias: bool = True
 
     eve_bitwise_latent_dims: Sequence[int] = (32, 8, 1)
     eve_latent_dim: Sequence[int] = (32,)
@@ -101,14 +105,14 @@ class EncryptionDetectionGAN(GAN):
                 raise ValueError('bob and alice are tied however they do not '
                                  'have the same weight sharing settings.')
 
-            enc_dec = ElementWise(self.alice_bitwise_latent_dims, activation='tanh',
+            enc_dec = ElementWise(self.alice_bitwise_latent_dims, activation=['relu', 'relu'],
                                   share_element_weights=self.alice_share_bitwise_weights,
                                   use_bias=self.use_bias)
 
             alice_encryption = Flatten(name='encryption')(
                 enc_dec([
-                    message_input,
-                    key_input
+                    key_input,
+                    message_input
                 ])
             )
 
@@ -124,7 +128,7 @@ class EncryptionDetectionGAN(GAN):
         else:
 
             alice_encryption = Flatten(name='alice_encryption')(
-                ElementWise(self.bob_bitwise_latent_dims, activation='tanh',
+                ElementWise(self.bob_bitwise_latent_dims, activation=['relu', 'tanh'],
                             share_element_weights=self.bob_share_bitwise_weights,
                             use_bias=self.use_bias)([
                     message_input,
@@ -132,16 +136,17 @@ class EncryptionDetectionGAN(GAN):
                 ]),
             )
 
-            modified_encryption = GaussianNoise(0.1)(alice_encryption)
+            modified_encryption = GaussianNoise(0.5)(alice_encryption)
 
             bob_decryption = Flatten(name='bob_decryption')(
-                ElementWise(self.bob_bitwise_latent_dims, activation='tanh',
+                ElementWise(self.bob_bitwise_latent_dims, activation=['relu', 'tanh'],
                             share_element_weights=self.bob_share_bitwise_weights,
                             use_bias=self.use_bias)([
                     modified_encryption,
-                    key_input
+                    key_input,
                 ]),
             )
+
 
         eves_opinion = discriminator([message_input, alice_encryption])
 
@@ -151,7 +156,7 @@ class EncryptionDetectionGAN(GAN):
         self.alice_bob = alice_bob
 
         def bit_encforcing_loss(y_true, y_pred):
-            return 1 - K.abs(y_pred)
+            return 1 - K.mean(K.abs(y_pred), axis=-1) + 0.75*K.abs(K.mean(y_pred))
 
         def decryption_accuracy(y_true, y_pred):
             return K.mean(K.equal(y_true, K.round(y_pred)), axis=-1)
@@ -160,7 +165,7 @@ class EncryptionDetectionGAN(GAN):
             return K.abs(0.5 - K.mean(y_pred))
 
         alice_bob.compile(optimizer=Adam(),
-                          loss=[bit_encforcing_loss, mean_absolute_error, binary_crossentropy],
+                          loss=[bit_encforcing_loss, mean_absolute_error, indistinguishable_loss],
                           loss_weights=list(self.generator_loss_weights),
                           metrics=[decryption_accuracy])
 
@@ -195,7 +200,6 @@ if __name__ == '__main__':
 
     model(generator_prefit_epochs=0,
           epochs=30,
-          generator_minbatch_multiplier=2,
           discriminator_postfit_epochs=10)
 
     model.visualize()

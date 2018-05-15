@@ -70,7 +70,7 @@ class GAN(NeuralCryptographyModel, ABC):
     discrimination_mode: DiscriminatorGame = DiscriminatorGame.DetectEncryption
 
     discriminator_real_label: int = 0
-    generator_loss_weights: Tuple[int] = (125, 1, 0.75)
+    generator_loss_weights: Tuple[int] = (2, 1.25, 1)
 
     def initialize_model(self):
         """
@@ -232,7 +232,7 @@ class GAN(NeuralCryptographyModel, ABC):
             P, C, Y = replace_encryptions_with_random_entries(msgs,
                                                               results,
                                                               real_label=self.discriminator_real_label,
-                                                              noise=0.05)
+                                                              noise=0.5)
 
             print(P)
             print(C)
@@ -276,8 +276,8 @@ class GAN(NeuralCryptographyModel, ABC):
                  epochs=50,
                  generator_prefit_epochs=10,
                  discriminator_postfit_epochs=10,
-                 generator_minbatch_multiplier=1,
-                 discriminator_minbatch_multiplier=1,
+                 generator_minbatch_multiplier=4,
+                 discriminator_minbatch_multiplier=1/4,
                  iterations_per_epoch=500,
                  batch_size=512):
         """
@@ -315,11 +315,11 @@ class GAN(NeuralCryptographyModel, ABC):
             print('epoch ', '{}/{}'.format(i+1, epochs))
 
             d_history = self.fit_discriminator(iterations_per_epoch,
-                                               discriminator_minbatch_multiplier * batch_size)
+                                               int(discriminator_minbatch_multiplier * batch_size))
 
             d_h.append(d_history)
 
-            g_history = self.fit_generator(iterations_per_epoch * generator_minbatch_multiplier,
+            g_history = self.fit_generator(int(iterations_per_epoch * generator_minbatch_multiplier),
                                            batch_size)
 
             g_h.append(g_history)

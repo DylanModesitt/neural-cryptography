@@ -14,7 +14,7 @@ from keras.preprocessing.image import img_to_array, load_img
 from data.DES import des
 
 
-def gen_symmetric_encryption_data(n, msg_len=16, key_len=16):
+def gen_symmetric_encryption_data(n, msg_len=16, key_len=16, center_zero=True):
     """
     generate data to allow the model to train for symmetric encryption.
     :param n: how much data
@@ -22,11 +22,16 @@ def gen_symmetric_encryption_data(n, msg_len=16, key_len=16):
     :param key_len: the length of the key
     :return: the data as (messages, keys)
     """
-    return (np.random.randint(0, 2, size=(n, msg_len))*2-1), \
-           (np.random.randint(0, 2, size=(n, key_len))*2-1)
+    a, b = np.random.randint(0, 2, size=(n, msg_len)),\
+           np.random.randint(0, 2, size=(n, key_len))
+
+    if not center_zero:
+        return a, b
+
+    return a*2-1, b*2-1
 
 
-def gen_xor_data(n, length):
+def gen_xor_data(n, length, center_zero=True):
     """
     generate n samples of two random bit strings of
     the same length
@@ -38,6 +43,9 @@ def gen_xor_data(n, length):
     a = np.random.randint(0, 2, size=(n, length))
     b = np.random.randint(0, 2, size=(n, length))
     xor = a ^ b
+
+    if not center_zero:
+        return a, b, xor
 
     return (a*2-1,
             b*2-1,

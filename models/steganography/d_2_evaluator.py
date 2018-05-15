@@ -83,6 +83,7 @@ class SteganographyImageCoverWrapper:
         print(list(secret.flatten().astype(int)))
         return string_from_bits(list(secret.flatten().astype(int)))
 
+
 def video_to_frames(directory, filename, frame_size=32):
     print("Converting video " + filename + " to frames")
 
@@ -130,6 +131,7 @@ def video_to_frames(directory, filename, frame_size=32):
 
     return center_location, scaled_location
 
+
 def video_in_video(helper, secret_path, cover_path, request_number):
     covers = load_images(path=cover_path, scale=model.image_scale)
     secrets = load_images(path=secret_path, scale=model.image_scale)
@@ -163,6 +165,7 @@ def video_in_video(helper, secret_path, cover_path, request_number):
         frame = frame[:,:,::-1]
         combined_vid.write(frame)
 
+
 def picture_in_picture(helper):
     hidden_secret, cover, secret = helper.hide_image_in_image(return_cover=True)
     revealed_secret = array_to_img(helper.decode_image_in_cover(hidden_secret))
@@ -175,7 +178,7 @@ def picture_in_picture(helper):
 
 
 if __name__ == '__main__':
-    model = Steganography2D(dir='./bin/2018-05-03_13:02__61857339')
+    model = Steganography2D(secret_channels=1, dir='./bin/steganography_3')
     model.load()
 
     helper = SteganographyImageCoverWrapper(model)

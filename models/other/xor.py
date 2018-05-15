@@ -75,8 +75,9 @@ class XOR(NeuralCryptographyModel):
 
         bitwise_function = Flatten()(
             ElementWise([self.latent_dim, 1],
-                        activation=['relu', 'tanh'],
-                        share_element_weights=True)([input_1, input_2])
+                        activation=['relu', 'relu'],
+                        share_element_weights=True,
+                        use_bias=False)([input_1, input_2])
         )
 
         model = Model(inputs=[input_1, input_2], outputs=bitwise_function)
@@ -109,7 +110,8 @@ class XOR(NeuralCryptographyModel):
 
             a, b, xor = gen_xor_data(iterations_per_epoch *
                                      batch_size,
-                                     self.input_length)
+                                     self.input_length,
+                                     center_zero=False)
 
             history = self.model.fit(
                 x=[a, b],

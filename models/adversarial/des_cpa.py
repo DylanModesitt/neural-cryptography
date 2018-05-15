@@ -42,7 +42,7 @@ class DES_ECB(Eve):
         f = Dense(self.message_length, activation='tanh')(f)
 
         model = Model(inputs=[message_input], outputs=f)
-        model.compile(optimizer='adam', loss='mse', metrics=['mae', 'acc'])
+        model.compile(optimizer='adam', loss='mae', metrics=['mae', 'acc'])
 
         if self.verbose > 0:
             model.summary()
