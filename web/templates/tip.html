@@ -2,10 +2,14 @@
 <html>
 <head>
     <title>Neural Steganography</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='viv_style.css') }}"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='viv_style2.css') }}"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 </head>
 <body>
-    <header>
+    <!-- <header>
         <div class=title>
             <h1>Neural Steganography: Text-in-Picture</h1><br>
             <p1>Choose a string to hide, as well as an image to hide it in. </p1>
@@ -15,8 +19,31 @@
             <a class=link href="{{ url_for('get_pip') }}">Picture-In-Picture</a>
             <a class=link href="{{ url_for('get_tip') }}">Text-In-Picture</a>
         </div>
-    </header>
-    <div class=section id=inputs>
+    </header> -->
+
+    <nav class="navbar navbar-inverse">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand">Neural Steganography: Text-in-Picture</a>
+        </div>
+        <div class="collapse navbar-collapse" id="myNavbar">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="{{ url_for('get_viv') }}">Video-in-Video</a></li>
+            <li><a href="{{ url_for('get_pip') }}">Picture-in-Picture</a></li>
+            <li class="active"><a href="{{ url_for('get_tip') }}"> Text-in-Picture </a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+<br><br>
+
+    <!-- <div class=section id=inputs>
         <div class=vid>
             <p>Choose a secret to send:</p><br>
 	    <p>Processed text: {{ secret }} </p><br>
@@ -33,7 +60,40 @@
             </form>
 	 </div>
     </div>
-    <div class=section id=hidden>
+    -->
+    <div class="container text-center">
+      <br>
+      <div class="row">
+        <div class="col-md-6">
+          <h4> Enter a secret to send: </h4> <br><br>
+          <form class="form-inline" action="/select_text" method="post">
+              <input name="secret" class="form-control" type="text" />
+              <input type="submit" class="btn btn-default " />
+          </form>
+          <br>
+          <p > Processed text: {{ secret }} </p>
+        </div>
+
+        <div class="col-md-6">
+            <h4>Choose a cover to hide the secret in:</h4><br>
+            <div class="row">
+                <div class="col-md-4"></div>
+                <!-- <img class="img-responsive" style="width:100%" alt="Image"> -->
+                <div class="col-md-4">
+                    <form action="/select_image_tip"  enctype="multipart/form-data" method="post">
+                        <input name="cover" class="form-control-file" type="file" onchange="form.submit()"/>
+                    </form>
+                </div>
+                <div class="col-md-4"></div>
+            </div><br>
+          <img width="128" height="128" src="{{ url_for('static', filename=cover) }}"/><br>
+        </div>
+      </div>
+    </div><br>
+    <br>
+    <br>
+
+    <!-- <div class=section id=hidden>
         <div class=vid>
 	    <form action="/compute_text" method=post>
 		<input type="submit" name="compute" value="Hide Text"/>
@@ -45,6 +105,38 @@
     <div class=section id=revealed>
         <p>Here is the revealed secret:</p>
         <p> {{ revealed }}
-    </div>
+    </div>  -->
+
+    <div class="container text-center">
+      <br>
+      <div class="row">
+          <div class="col-md-5"></div>
+          <div class="col-md-2">
+              <form action="/compute_text" method=post>
+                  <input type="submit" class="btn btn-success btn-block" name="compute" value="Hide Text"/>
+              </form>
+          </div>
+          <div class="col-md-5"></div>
+      </div>
+  </div><br><br>
+
+    <div class="container text-center">
+      <br>
+      <div class="row">
+        <div class="col-md-6" id=hidden>
+          <h4>Here is the hidden secret to send:</h4><br>
+          <img width="128" height="128" src="{{ url_for('static', filename=hidden) }}"/><br>
+        </div>
+        <div class="col-md-6" id=revealed>
+          <h4>Here is the revealed secret:</h4><br>
+          <p> {{ revealed }} </p>
+        </div>
+      </div>
+  </div><br><br><br>
+
+    <footer class="navbar navbar-inverse container-fluid text-center">
+        <p style="color:white;"> link github? </p>
+    </footer>
+
 </body>
 </html>
