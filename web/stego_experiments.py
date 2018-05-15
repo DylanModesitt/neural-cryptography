@@ -18,6 +18,7 @@ from general.utils import join_list_valued_dictionaries, balance_real_and_fake_s
 from data.data import load_image_covers_and_random_bit_secrets
 from models.steganography.d_2_evaluator import *
 
+
 def video_to_frames(directory, filename, frame_size=32):
     print("Converting video " + filename + " to frames")
 
