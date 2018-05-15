@@ -73,7 +73,8 @@ class Steganography2D(NeuralCryptographyModel):
     conv_filters: int = 50
     convolution_dimmensions: Tuple[int] = (3, 4, 5)
 
-    image_scale: int = 1./255.
+    cover_scale: int = 1./255.
+    secret_scale: int = 1.
 
     beta = 0.75
     gamma = 1
@@ -267,7 +268,7 @@ class Steganography2D(NeuralCryptographyModel):
                              (self.cover_height, self.cover_width, self.secret_channels))
 
         hidden_secret = self.hiding_model.predict([cover, secret])
-        return np.divide(hidden_secret, self.image_scale)
+        return np.divide(hidden_secret, self.cover_scale)
 
     def hide(self, cover, secret):
 
@@ -287,7 +288,7 @@ class Steganography2D(NeuralCryptographyModel):
         cover = np.array([cover])
 
         hidden_secret = self.hiding_model.predict([cover, secret])[0]
-        return np.divide(hidden_secret, self.image_scale)
+        return np.divide(hidden_secret, self.cover_scale)
 
     def reveal_array(self, hidden_secret):
         if hidden_secret.shape[1] != self.cover_height or hidden_secret.shape[2] != self.cover_width \
@@ -296,7 +297,7 @@ class Steganography2D(NeuralCryptographyModel):
             raise ValueError('expected hidden to be of shape [ ?, %s, %s, %s] ' %
                              (self.cover_height, self.cover_width, self.secret_channels))
 
-        hidden_secret = np.multiply(hidden_secret, self.image_scale)
+        hidden_secret = np.multiply(hidden_secret, self.cover_scale)
         secret = self.revealing_model.predict(hidden_secret)
 
         return secret
@@ -309,7 +310,7 @@ class Steganography2D(NeuralCryptographyModel):
             raise ValueError('expected hidden to be of shape [ %s, %s, %s] ' %
                              (self.cover_height, self.cover_width, self.secret_channels))
 
-        hidden_secret = np.array([hidden_secret * self.image_scale])
+        hidden_secret = np.array([hidden_secret * self.cover_scale])
         secret = self.revealing_model.predict([hidden_secret])[0]
 
         return secret
@@ -433,7 +434,7 @@ class Steganography2D(NeuralCryptographyModel):
 if __name__ == '__main__':
 
     model = Steganography2D(secret_channels=1,)
-    
+
     model(censorship_discriminator_epochs=0,
           prefit_decryptionn_epochs=0,
           adversarial_epochs=0,
