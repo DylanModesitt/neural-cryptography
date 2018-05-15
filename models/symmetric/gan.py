@@ -320,6 +320,7 @@ class GAN(NeuralCryptographyModel, ABC):
 
             self.save()
 
+
         for i in range(discriminator_postfit_epochs):
 
             print('discriminator postfit epoch', i)
