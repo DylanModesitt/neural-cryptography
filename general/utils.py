@@ -108,6 +108,7 @@ def replace_encryptions_with_random_entries(P, C, fraction=1/2, real_label=0, ce
     return P, C, Y
 
 
+
 def bits_from_string(s):
     """
     given a string, return its binary represenation as a list

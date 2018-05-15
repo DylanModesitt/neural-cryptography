@@ -9,6 +9,7 @@ from keras.layers import (
     Dense,
     Flatten,
     GaussianNoise,
+    Conv1D,
     LocallyConnected1D,
     PReLU,
     Add,
@@ -21,6 +22,7 @@ from keras.losses import mean_absolute_error, binary_crossentropy
 
 # self
 from general.layers import ElementWise
+from general.binary_ops import binary_tanh
 from models.symmetric.gan import GAN, DiscriminatorGame
 
 
@@ -40,10 +42,10 @@ class EncryptionDetectionGAN(GAN):
 
     This game is somewhat based on the CPA game.
     """
-    alice_bitwise_latent_dims: Sequence[int] = (12, 1)
-    bob_bitwise_latent_dims: Sequence[int] = (12, 1)
-    alice_share_bitwise_weights: bool = False
-    bob_share_bitwise_weights: bool = False
+    alice_bitwise_latent_dims: Sequence[int] = (20, 1)
+    bob_bitwise_latent_dims: Sequence[int] = (20, 1)
+    alice_share_bitwise_weights: bool = True
+    bob_share_bitwise_weights: bool = True
 
     tie_alice_and_bob = False
 
@@ -52,6 +54,16 @@ class EncryptionDetectionGAN(GAN):
     eve_bitwise_latent_dims: Sequence[int] = (32, 8, 1)
     eve_latent_dim: Sequence[int] = (32,)
     eve_share_bitwise_weights: bool = False
+
+    @staticmethod
+    def cryptography_convolution(layer):
+
+        l = Conv1D(2, kernel_size=4, strides=1, activation='relu', padding='same')(layer)
+        l = Conv1D(4, kernel_size=2, strides=2, activation='relu', padding='same')(l)
+        l = Conv1D(4, kernel_size=1, strides=1, activation='relu', padding='same')(l)
+        l = Conv1D(1, kernel_size=1, strides=1, activation='relu', padding='same')(l)
+        f = Flatten()(l)
+        return f
 
     def initialize_discriminator(self, *inputs):
 
@@ -105,7 +117,7 @@ class EncryptionDetectionGAN(GAN):
                 raise ValueError('bob and alice are tied however they do not '
                                  'have the same weight sharing settings.')
 
-            enc_dec = ElementWise(self.alice_bitwise_latent_dims, activation=['relu', 'relu'],
+            enc_dec = ElementWise(self.alice_bitwise_latent_dims, activation=['relu', binary_tanh],
                                   share_element_weights=self.alice_share_bitwise_weights,
                                   use_bias=self.use_bias)
 
@@ -120,33 +132,34 @@ class EncryptionDetectionGAN(GAN):
 
             bob_decryption = Flatten(name='decryption')(
                 enc_dec([
+                    key_input,
                     modified_encryption,
-                    key_input
                 ]),
             )
 
         else:
 
             alice_encryption = Flatten(name='alice_encryption')(
-                ElementWise(self.bob_bitwise_latent_dims, activation=['relu', 'tanh'],
+                ElementWise(self.bob_bitwise_latent_dims, activation=['relu', binary_tanh],
                             share_element_weights=self.bob_share_bitwise_weights,
-                            use_bias=self.use_bias)([
+                            use_bias=self.use_bias,
+                            kernel_initializer='RandomNormal')([
                     message_input,
                     key_input
                 ]),
             )
 
-            modified_encryption = GaussianNoise(0.5)(alice_encryption)
+            modified_encryption = GaussianNoise(0.1)(alice_encryption)
 
             bob_decryption = Flatten(name='bob_decryption')(
-                ElementWise(self.bob_bitwise_latent_dims, activation=['relu', 'tanh'],
+                ElementWise(self.bob_bitwise_latent_dims, activation=['relu', binary_tanh],
                             share_element_weights=self.bob_share_bitwise_weights,
-                            use_bias=self.use_bias)([
+                            use_bias=self.use_bias,
+                            kernel_initializer='RandomNormal')([
                     modified_encryption,
                     key_input,
                 ]),
             )
-
 
         eves_opinion = discriminator([message_input, alice_encryption])
 
@@ -155,8 +168,9 @@ class EncryptionDetectionGAN(GAN):
         alice_bob = Model(inputs=inputs, outputs=[alice_encryption, bob_decryption, eves_opinion])
         self.alice_bob = alice_bob
 
+        # 1 - K.mean(K.abs(y_pred), axis=-1) +
         def bit_encforcing_loss(y_true, y_pred):
-            return 1 - K.mean(K.abs(y_pred), axis=-1) + 0.75*K.abs(K.mean(y_pred))
+            return K.abs(K.mean(y_pred))
 
         def decryption_accuracy(y_true, y_pred):
             return K.mean(K.equal(y_true, K.round(y_pred)), axis=-1)
@@ -164,7 +178,7 @@ class EncryptionDetectionGAN(GAN):
         def indistinguishable_loss(y_true, y_pred):
             return K.abs(0.5 - K.mean(y_pred))
 
-        alice_bob.compile(optimizer=Adam(),
+        alice_bob.compile(optimizer=Adam(lr=0.0001),
                           loss=[bit_encforcing_loss, mean_absolute_error, indistinguishable_loss],
                           loss_weights=list(self.generator_loss_weights),
                           metrics=[decryption_accuracy])

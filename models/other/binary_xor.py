@@ -1,47 +1,28 @@
 # system
-import sys
-import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 # lib
 import numpy as np
-import keras.backend as K
 from keras.models import Model
 from keras.layers import (
     Input,
-    LocallyConnected1D,
-    TimeDistributed,
-    Embedding,
-    LSTM,
-    Dense,
-    LeakyReLU,
-    Reshape,
-    Conv1D,
     Concatenate,
-    Flatten
+    Activation
 )
-from keras.activations import (
-    sigmoid,
-    relu,
-    tanh,
-)
-from keras.optimizers import Adam
-from keras.losses import mean_absolute_error
-from keras.metrics import binary_accuracy
-from keras.losses import mean_absolute_error
 
-import matplotlib.pyplot as plt
+from keras.optimizers import Adam
 
 # self
-from general.layers import ElementWise
+from general.layers import BinaryDense
 from general.binary_ops import binary_tanh
+
 from models.model import NeuralCryptographyModel
 from data.data import gen_xor_data
-from general.utils import join_list_valued_dictionaries, nanify_dict_of_lists
+from general.utils import join_list_valued_dictionaries
 
 
 @dataclass
-class XOR(NeuralCryptographyModel):
+class BinaryXOR(NeuralCryptographyModel):
     """
     a model that learns the xor bitwise functionn.
     """
@@ -54,35 +35,16 @@ class XOR(NeuralCryptographyModel):
         input_1 = Input(shape=(self.input_length,), name='input_1')
         input_2 = Input(shape=(self.input_length,), name='input_2')
 
-        # reshape = Reshape((-1, 1))
-        # ORIGINAL BITWISE FUNCTION IMPLEMENTATION
-        #
-        # bitwise_function = Flatten()(
-        #     TimeDistributed(
-        #         Dense(1, activation='tanh')
-        #     )(LocallyConnected1D(
-        #             self.latent_dim,
-        #             kernel_size=2,
-        #             strides=2,
-        #             activation='relu'
-        #         )(reshape(
-        #             Intertwine()([
-        #                 input_1,
-        #                 input_2
-        #             ]))
-        #         )
-        #     )
-        # )
+        binary_dense = BinaryDense(self.input_length)(Concatenate()([
+            input_1, input_2
+        ]))
 
-        bitwise_function = Flatten()(
-            ElementWise([self.latent_dim, 1],
-                        activation=['relu', binary_tanh],
-                        share_element_weights=True,
-                        use_bias=False)([input_1, input_2])
-        )
+        binary_dense = Activation(binary_tanh)(binary_dense)
 
-        model = Model(inputs=[input_1, input_2], outputs=bitwise_function)
-        model.compile(optimizer=Adam(), loss=mean_absolute_error)
+        # binary_dense = BinaryDense(self.input_length, activation=binary_tanh)(binary_dense)
+
+        model = Model(inputs=[input_1, input_2], outputs=binary_dense)
+        model.compile(optimizer=Adam(), loss='squared_hinge')
 
         self.model = model
 
@@ -113,6 +75,10 @@ class XOR(NeuralCryptographyModel):
                                      batch_size,
                                      self.input_length)
 
+            print(a[0])
+            print(b[0])
+            print(xor[0])
+
             history = self.model.fit(
                 x=[a, b],
                 y=xor,
@@ -120,6 +86,9 @@ class XOR(NeuralCryptographyModel):
                 batch_size=batch_size,
                 verbose=self.verbose,
             ).history
+
+            p = [np.array([a[0]]), np.array([b[0]])]
+            print(self.model.predict(p))
 
             xor_histories.append(history)
 
@@ -134,7 +103,7 @@ class XOR(NeuralCryptographyModel):
 
 
 if __name__ == '__main__':
-    model = XOR(verbose=1)
+    model = BinaryXOR(verbose=1)
     history = model(epochs=10)
     model.visualize()
 

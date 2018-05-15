@@ -70,7 +70,7 @@ class GAN(NeuralCryptographyModel, ABC):
     discrimination_mode: DiscriminatorGame = DiscriminatorGame.DetectEncryption
 
     discriminator_real_label: int = 0
-    generator_loss_weights: Tuple[int] = (2, 1.25, 1)
+    generator_loss_weights: Tuple[int] = (0.75, 1.5, 1.25)
 
     def initialize_model(self):
         """
@@ -232,7 +232,7 @@ class GAN(NeuralCryptographyModel, ABC):
             P, C, Y = replace_encryptions_with_random_entries(msgs,
                                                               results,
                                                               real_label=self.discriminator_real_label,
-                                                              noise=0.5)
+                                                              noise=0.1)
 
             print(P)
             print(C)
@@ -276,8 +276,8 @@ class GAN(NeuralCryptographyModel, ABC):
                  epochs=50,
                  generator_prefit_epochs=10,
                  discriminator_postfit_epochs=10,
-                 generator_minbatch_multiplier=4,
-                 discriminator_minbatch_multiplier=1/4,
+                 generator_minbatch_multiplier=5,
+                 discriminator_minbatch_multiplier=1/5,
                  iterations_per_epoch=500,
                  batch_size=512):
         """
