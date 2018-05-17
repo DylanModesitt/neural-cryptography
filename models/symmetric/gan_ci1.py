@@ -10,6 +10,8 @@ from keras.layers import (
     Flatten,
     GaussianNoise,
     Conv1D,
+    Concatenate,
+    Reshape,
     LocallyConnected1D,
     PReLU,
     Add,
@@ -139,27 +141,16 @@ class EncryptionDetectionGAN(GAN):
 
         else:
 
-            alice_encryption = Flatten(name='alice_encryption')(
-                ElementWise(self.bob_bitwise_latent_dims, activation=['relu', binary_tanh],
-                            share_element_weights=self.bob_share_bitwise_weights,
-                            use_bias=self.use_bias,
-                            kernel_initializer='RandomNormal')([
-                    message_input,
-                    key_input
-                ]),
-            )
+            alice_input = Concatenate()([key_input, message_input])
+            alice_l = Dense(self.n, activation='sigmoid', name='alice_dense')(alice_input)
+            alice_l = Reshape((-1, 1), name='alice_reshape')(alice_l)
+            alice_encryption = self.cryptography_convolution(alice_l)
 
-            modified_encryption = GaussianNoise(0.1)(alice_encryption)
+            bob_input = Concatenate()([alice_encryption, key_input])
+            bob_l = Dense(self.n, activation='sigmoid', name='bob_dense')(bob_input)
+            bob_l = Reshape((-1, 1), name='bob_reshape')(bob_l)
+            bob_decryption = self.cryptography_convolution(bob_l)
 
-            bob_decryption = Flatten(name='bob_decryption')(
-                ElementWise(self.bob_bitwise_latent_dims, activation=['relu', binary_tanh],
-                            share_element_weights=self.bob_share_bitwise_weights,
-                            use_bias=self.use_bias,
-                            kernel_initializer='RandomNormal')([
-                    modified_encryption,
-                    key_input,
-                ]),
-            )
 
         eves_opinion = discriminator([message_input, alice_encryption])
 
@@ -213,8 +204,8 @@ if __name__ == '__main__':
                                    bob_share_bitwise_weights=True)
 
     model(generator_prefit_epochs=0,
-          epochs=30,
-          discriminator_postfit_epochs=10)
+          epochs=10,
+          discriminator_postfit_epochs=5)
 
     model.visualize()
 

@@ -76,7 +76,7 @@ class XOR(NeuralCryptographyModel):
 
         bitwise_function = Flatten()(
             ElementWise([self.latent_dim, 1],
-                        activation=['relu', binary_tanh],
+                        activation=['relu', 'sigmoid'],
                         share_element_weights=True,
                         use_bias=False)([input_1, input_2])
         )
