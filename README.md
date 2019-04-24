@@ -6,8 +6,8 @@ of adversarial networks. Experiments with currently only symmetric key
 encryption have been done. However, we indent to broaden our model designs
 as development continues. 
 
-This is being done as the final project to an MIT course, 6.857, 
-and is still in active development. 
+This was done as the final project to an MIT course, 6.857. You can view the paper 
+[here](https://courses.csail.mit.edu/6.857/2018/project/Modesitt-Henry-Coden-Lathe-NeuralCryptography.pdf)
 
 The models are written in Keras and are trained using the 
 tensorflow backend. Once completed, this 
