@@ -1,4 +1,4 @@
-# Neural Cryptography [here](https://courses.csail.mit.edu/6.857/2018/project/Modesitt-Henry-Coden-Lathe-NeuralCryptography.pdf)
+# Neural Cryptography [paper](https://courses.csail.mit.edu/6.857/2018/project/Modesitt-Henry-Coden-Lathe-NeuralCryptography.pdf)
 
 
 These are tools experimenting with neural cryptography. More specifically,
